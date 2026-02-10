@@ -14,6 +14,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        submodules: recursive  # Important - this project uses git submodules!
     
     - name: Setup MSVC
       uses: microsoft/setup-msbuild@v2
@@ -23,76 +25,107 @@ jobs:
     
     - name: Check project structure
       run: |
-        echo "=== Project files ==="
-        Get-ChildItem -Recurse -Include CMakeLists.txt,*.cpp,*.h | ForEach-Object {
-          echo $_.FullName
+        echo "=== Root directory ==="
+        Get-ChildItem
+        
+        echo "`n=== src directory ==="
+        Get-ChildItem src
+        
+        echo "`n=== Submodules ==="
+        if (Test-Path "src/thirdparty") {
+          Get-ChildItem src/thirdparty | Select-Object Name
         }
       shell: pwsh
     
     - name: Configure CMake
       run: |
-        cmake -B build -G "Visual Studio 17 2022" -A Win32
+        # CMakeLists.txt is in src/ directory
+        cmake -S src -B build -G "Visual Studio 17 2022" -A Win32 `
+          -DSERVER_USE_GUI=OFF `
+          -DSERVER_PUBLIC=OFF `
+          -DSERVER_PROTECTION=OFF `
+          -DSERVER_DBSQLITE=ON `
+          -DSERVER_DB_PROXY=OFF
       shell: pwsh
     
-    - name: Build with CMake
+    - name: Build with CMake (Release)
       run: |
-        cmake --build build --config Release
+        cmake --build build --config Release -j 4
       shell: pwsh
+    
+    - name: Build with CMake (Debug)
+      run: |
+        cmake --build build --config Debug -j 4
+      shell: pwsh
+      continue-on-error: true
     
     - name: Find built files
       run: |
-        echo "=== Built executables and libraries ==="
-        Get-ChildItem -Recurse -Path build -Include *.exe,*.dll | ForEach-Object {
+        echo "=== Built executables ==="
+        Get-ChildItem -Recurse -Include *.exe,*.dll | Where-Object {
+          $_.FullName -like "*bin*" -or 
+          $_.FullName -like "*build*Release*" -or
+          $_.FullName -like "*build*Debug*"
+        } | ForEach-Object {
           echo "Found: $($_.FullName) - $([math]::Round($_.Length/1KB, 2)) KB"
         }
       shell: pwsh
     
-    - name: Copy output files
+    - name: Collect output files
       run: |
         New-Item -ItemType Directory -Force -Path "output"
         
-        # Copy all executables and DLLs from Release build
-        Get-ChildItem -Recurse -Path build\Release -Include *.exe,*.dll -ErrorAction SilentlyContinue | ForEach-Object {
-          Copy-Item $_.FullName -Destination "output\" -Force
-          echo "Copied: $($_.Name)"
-        }
-        
-        # Also check root build directory
-        Get-ChildItem -Recurse -Path build -Include *.exe,*.dll -ErrorAction SilentlyContinue | Where-Object {
-          $_.Directory.Name -eq "Release" -or $_.Directory.Parent.Name -eq "Release"
-        } | ForEach-Object {
-          $destPath = "output\$($_.Name)"
-          if (-not (Test-Path $destPath)) {
+        # The executable should be in bin/ directory (set by line 123 of CMakeLists.txt)
+        if (Test-Path "bin") {
+          echo "=== Copying from bin/ directory ==="
+          Get-ChildItem -Path bin -Include *.exe,*.dll -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
             Copy-Item $_.FullName -Destination "output\" -Force
-            echo "Copied: $($_.Name)"
+            echo "Copied: $($_.Name) - $([math]::Round($_.Length/1KB, 2)) KB"
           }
         }
         
-        echo "`n=== Files in output directory ==="
-        Get-ChildItem output
+        # Also check build output directories
+        if (Test-Path "build/Release") {
+          echo "`n=== Copying from build/Release ==="
+          Get-ChildItem -Path build/Release -Include *.exe,*.dll -ErrorAction SilentlyContinue | ForEach-Object {
+            $dest = "output\$($_.Name)"
+            if (-not (Test-Path $dest)) {
+              Copy-Item $_.FullName -Destination "output\" -Force
+              echo "Copied: $($_.Name) - $([math]::Round($_.Length/1KB, 2)) KB"
+            }
+          }
+        }
+        
+        echo "`n=== Final output directory ==="
+        if (Test-Path "output") {
+          Get-ChildItem output | ForEach-Object {
+            echo "$($_.Name) - $([math]::Round($_.Length/1KB, 2)) KB"
+          }
+        }
       shell: pwsh
     
-    - name: Upload artifacts
+    - name: Upload Release Build
       uses: actions/upload-artifact@v4
       with:
-        name: CSNZ-Server-Build
+        name: CSNZ-Server-Release
         path: output/*
-        if-no-files-found: warn
+        if-no-files-found: error
     
-    - name: Build summary
+    - name: Build Summary
       run: |
         echo "=== Build Summary ==="
         if (Test-Path "output") {
-          $files = Get-ChildItem "output"
+          $files = Get-ChildItem "output" -ErrorAction SilentlyContinue
           if ($files.Count -gt 0) {
-            echo "✅ Build successful! $($files.Count) file(s) generated:"
+            echo "✅ Build successful! Generated files:"
             $files | ForEach-Object {
-              echo "  - $($_.Name) ($([math]::Round($_.Length/1KB, 2)) KB)"
+              $size = [math]::Round($_.Length/1KB, 2)
+              echo "  ✓ $($_.Name) - $size KB"
             }
           } else {
-            echo "⚠️ Build completed but no output files found"
+            echo "❌ No output files found!"
           }
         } else {
-          echo "❌ Output directory not created - build may have failed"
+          echo "❌ Output directory not created!"
         }
       shell: pwsh
