@@ -1,0 +1,98 @@
+name: Build CSNZ Server
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Check project structure
+      run: |
+        echo "=== Project files ==="
+        Get-ChildItem -Recurse -Include CMakeLists.txt,*.cpp,*.h | ForEach-Object {
+          echo $_.FullName
+        }
+      shell: pwsh
+    
+    - name: Configure CMake
+      run: |
+        cmake -B build -G "Visual Studio 17 2022" -A Win32
+      shell: pwsh
+    
+    - name: Build with CMake
+      run: |
+        cmake --build build --config Release
+      shell: pwsh
+    
+    - name: Find built files
+      run: |
+        echo "=== Built executables and libraries ==="
+        Get-ChildItem -Recurse -Path build -Include *.exe,*.dll | ForEach-Object {
+          echo "Found: $($_.FullName) - $([math]::Round($_.Length/1KB, 2)) KB"
+        }
+      shell: pwsh
+    
+    - name: Copy output files
+      run: |
+        New-Item -ItemType Directory -Force -Path "output"
+        
+        # Copy all executables and DLLs from Release build
+        Get-ChildItem -Recurse -Path build\Release -Include *.exe,*.dll -ErrorAction SilentlyContinue | ForEach-Object {
+          Copy-Item $_.FullName -Destination "output\" -Force
+          echo "Copied: $($_.Name)"
+        }
+        
+        # Also check root build directory
+        Get-ChildItem -Recurse -Path build -Include *.exe,*.dll -ErrorAction SilentlyContinue | Where-Object {
+          $_.Directory.Name -eq "Release" -or $_.Directory.Parent.Name -eq "Release"
+        } | ForEach-Object {
+          $destPath = "output\$($_.Name)"
+          if (-not (Test-Path $destPath)) {
+            Copy-Item $_.FullName -Destination "output\" -Force
+            echo "Copied: $($_.Name)"
+          }
+        }
+        
+        echo "`n=== Files in output directory ==="
+        Get-ChildItem output
+      shell: pwsh
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: CSNZ-Server-Build
+        path: output/*
+        if-no-files-found: warn
+    
+    - name: Build summary
+      run: |
+        echo "=== Build Summary ==="
+        if (Test-Path "output") {
+          $files = Get-ChildItem "output"
+          if ($files.Count -gt 0) {
+            echo "✅ Build successful! $($files.Count) file(s) generated:"
+            $files | ForEach-Object {
+              echo "  - $($_.Name) ($([math]::Round($_.Length/1KB, 2)) KB)"
+            }
+          } else {
+            echo "⚠️ Build completed but no output files found"
+          }
+        } else {
+          echo "❌ Output directory not created - build may have failed"
+        }
+      shell: pwsh
