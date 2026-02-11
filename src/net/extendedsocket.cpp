@@ -231,23 +231,28 @@ CReceivePacket* CExtendedSocket::Read()
 		if (!m_pMsg->IsValid())
 		{
 			// DEBUG: Log what we actually received
-			Logger().Error("CExtendedSocket::Read(%s): received invalid packet\n", GetIP().c_str());
-			if (packetDataBuf.size() > 0)
+	Logger().Error("CExtendedSocket::Read(%s): received invalid packet\n", GetIP().c_str());
+		if (packetDataBuf.size() > 0)
+		{
+			Logger().Info("[DEBUG] Packet size: %d bytes\n", (int)packetDataBuf.size());
+			
+			// Build hex string
+			std::string hexStr = "[DEBUG] First 20 bytes (hex): ";
+			for (size_t i = 0; i < std::min((size_t)20, packetDataBuf.size()); i++)
 			{
-				Logger().Info("[DEBUG] Packet size: %d bytes\n", (int)packetDataBuf.size());
-				Logger().Info("[DEBUG] First 20 bytes (hex): ");
-				for (size_t i = 0; i < std::min((size_t)20, packetDataBuf.size()); i++)
-				{
-					printf("%02X ", (unsigned char)packetDataBuf[i]);
-				}
-				printf("\n");
-				Logger().Info("[DEBUG] Expected signature: 0x%02X ('U'), Got: 0x%02X ('%c')\n", 
-				             TCP_PACKET_SIGNATURE, (unsigned char)packetDataBuf[0], 
-				             (packetDataBuf[0] >= 32 && packetDataBuf[0] < 127) ? packetDataBuf[0] : '?');
+				char buf[8];
+				sprintf(buf, "%02X ", (unsigned char)packetDataBuf[i]);
+				hexStr += buf;
 			}
-			delete m_pMsg;
-			m_pMsg = NULL;
-			return NULL;
+			Logger().Info("%s\n", hexStr.c_str());
+			
+			Logger().Info("[DEBUG] Expected signature: 0x%02X ('U'), Got: 0x%02X ('%c')\n", 
+			             TCP_PACKET_SIGNATURE, (unsigned char)packetDataBuf[0], 
+			             (packetDataBuf[0] >= 32 && packetDataBuf[0] < 127) ? packetDataBuf[0] : '?');
+		}
+		delete m_pMsg;
+		m_pMsg = NULL;
+		return NULL;
 		}
 
 		if (m_pMsg->GetSequence() != m_nNextExpectedSeq)
