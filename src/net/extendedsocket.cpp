@@ -238,7 +238,8 @@ CReceivePacket* CExtendedSocket::Read()
 			
 			// Build hex string
 			std::string hexStr = "[DEBUG] First 20 bytes (hex): ";
-			for (size_t i = 0; i < std::min((size_t)20, packetDataBuf.size()); i++)
+			size_t maxBytes = packetDataBuf.size() < 20 ? packetDataBuf.size() : 20;
+			for (size_t i = 0; i < maxBytes; i++)
 			{
 				char buf[8];
 				sprintf(buf, "%02X ", (unsigned char)packetDataBuf[i]);
@@ -253,7 +254,6 @@ CReceivePacket* CExtendedSocket::Read()
 		delete m_pMsg;
 		m_pMsg = NULL;
 		return NULL;
-		}
 
 		if (m_pMsg->GetSequence() != m_nNextExpectedSeq)
 		{
