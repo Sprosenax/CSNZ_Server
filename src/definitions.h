@@ -132,7 +132,9 @@ enum PacketId
 	Captcha = 193,
 	ClanTotalWar = 194,
 	ContributionPassInven = 195,
-	// missing 60 packets
+	ItemInven2 = 196,        // 2025 client: secondary item inventory (accessories/costumes)
+	ContentList = 197,       // 2025 client: available map/content list for lobby
+	// missing 58 packets
 };
 
 enum HostPacketType

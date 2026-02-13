@@ -635,6 +635,9 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 	g_PacketManager.SendUpdateInfo(socket);
 
 	g_PacketManager.SendVoxelURLs(socket, g_pServerConfig->voxelVxlURL, g_pServerConfig->voxelVmgURL);
+
+	// 2025 client: send available map/content list for lobby UI
+	g_PacketManager.SendContentList(socket);
 }
 
 void CUserManager::SendMetadata(IExtendedSocket* socket)

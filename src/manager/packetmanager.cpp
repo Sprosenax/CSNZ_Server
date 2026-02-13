@@ -7286,6 +7286,40 @@ void CPacketManager::SendVoxelURLs(IExtendedSocket* socket, const std::string& v
 	socket->Send(msg);
 }
 
+// 2025 client requires this packet after VoxelURLs.
+// It provides the list of map IDs available in the lobby selector.
+// Without it the client crashes ~1 second after the lobby loads.
+void CPacketManager::SendContentList(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::ContentList);
+	msg->BuildHeader();
+
+	// subtype
+	msg->WriteUInt8(0);
+	// year (2025)
+	msg->WriteUInt16(2025);
+	// unk
+	msg->WriteUInt16(1);
+
+	// Available map IDs for the lobby - captured from 2025 reference server
+	static const uint16_t mapIds[] = {
+		74, 75, 76, 77, 85, 92, 98, 106, 112, 113, 117, 119, 121, 123, 126,
+		128, 131, 133, 134, 139, 143, 144, 146, 147, 148, 152, 156, 157, 158,
+		163, 164, 165, 170, 172, 173, 174, 183, 184, 185, 187, 188, 189, 194,
+		195, 196, 197, 198, 199, 200, 201, 203, 204, 205, 209, 210, 211, 212,
+		219, 220, 221, 235, 236, 237, 265, 269, 270, 272, 273, 274, 275, 278,
+		279, 280, 281, 285, 301, 302, 303, 304, 305, 315, 316, 320, 323, 324,
+		325, 328, 335, 336, 337, 354, 355, 361, 370, 371
+	};
+	const int mapCount = sizeof(mapIds) / sizeof(mapIds[0]);
+
+	msg->WriteUInt16(mapCount);
+	for (int i = 0; i < mapCount; i++)
+		msg->WriteUInt16(mapIds[i]);
+
+	socket->Send(msg);
+}
+
 void CPacketManager::SendVoxelUnk38(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Voxel);
