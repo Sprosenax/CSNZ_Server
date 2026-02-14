@@ -3322,6 +3322,18 @@ void CPacketManager::SendDefaultItems(IExtendedSocket* socket, const vector<CUse
 	socket->Send(msg);
 }
 
+// 2025 client: sends empty DefaultItems packet with subtype 0 (ID=152 sub=0)
+// Format: sub(u8) + count(u8) = 2 bytes total
+// This packet appears after shop packets and before channel join
+void CPacketManager::SendDefaultItemsUnk(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::DefaultItems);
+	msg->BuildHeader();
+	msg->WriteUInt8(0);  // subtype 0
+	msg->WriteUInt8(0);  // count 0
+	socket->Send(msg);
+}
+
 void CPacketManager::SendHostOnItemUse(IExtendedSocket* socket, int userId, int itemId)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);

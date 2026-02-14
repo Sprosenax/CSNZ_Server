@@ -616,12 +616,6 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 		g_PacketManager.SendEventMainMenuSkin(socket, g_pServerConfig->mainMenuSkinEvent);
 	}
 
-	Logger().Info("[LOGIN_FLOW] Sending EventUnk packet...");
-	g_PacketManager.SendEventUnk(socket);
-
-	Logger().Info("[LOGIN_FLOW] Sending EventAdd packet...");
-	g_PacketManager.SendEventAdd(socket, g_pServerConfig->activeMiniGamesFlag);
-
 	if (g_pServerConfig->activeMiniGamesFlag & kEventFlag_WeaponRelease)
 	{
 		Logger().Info("[LOGIN_FLOW] Sending WeaponReleaseUpdate...");
@@ -641,6 +635,17 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 	g_PacketManager.SendShopUpdate(socket, g_ShopManager.GetProducts());
 	g_PacketManager.SendShopRecommendedProducts(socket, g_ShopManager.GetRecommendedProducts());
 	g_PacketManager.SendShopPopularProducts(socket, g_ShopManager.GetPopularProducts());
+
+	// 2025 client: Event packets must come AFTER shop packets
+	Logger().Info("[LOGIN_FLOW] Sending EventUnk packet...");
+	g_PacketManager.SendEventUnk(socket);
+
+	Logger().Info("[LOGIN_FLOW] Sending EventAdd packet...");
+	g_PacketManager.SendEventAdd(socket, g_pServerConfig->activeMiniGamesFlag);
+
+	// 2025 client: DefaultItemsUnk packet (ID=152 sub=0) must come after Event packets
+	Logger().Info("[LOGIN_FLOW] Sending DefaultItemsUnk packet...");
+	g_PacketManager.SendDefaultItemsUnk(socket);
 
 	// CN: 欢迎来到CSN:S服务器! 我们的服务器是非商业性的, 不要相信任何人说的售卖CSOL私服的信息.\n官方Discord: https://discord.gg/EvUAY6D \n
 	const char* text = OBFUSCATE("EN: Welcome to the CSN:S server! The project is non-commercial. Don't trust people trying to sell you a server.\nServer developer Discord: https://discord.gg/EvUAY6D \n");

@@ -67,6 +67,7 @@ public:
 	void SendInventoryRemove(IExtendedSocket* socket, const std::vector<CUserInventoryItem>& items, bool gameSlot = true);
 
 	void SendDefaultItems(IExtendedSocket* socket, const std::vector<CUserInventoryItem>& items);
+	void SendDefaultItemsUnk(IExtendedSocket* socket);
 
 	void SendVersion(IExtendedSocket* socket, int result);
 
