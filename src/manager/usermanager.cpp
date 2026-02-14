@@ -576,12 +576,15 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 {
 	IExtendedSocket* socket = user->GetExtendedSocket();
 
-	Logger().Info("=== TEST 1: ABSOLUTE MINIMUM - Only UserStart ===");
+	Logger().Info("=== TEST 2: UserStart + Metadata ===");
 	
-	// ONLY send UserStart packet - nothing else
 	g_PacketManager.SendUserStart(socket, user->GetID(), user->GetUsername(), character.gameName, true);
 	
-	Logger().Info("=== TEST 1 COMPLETE - Does it crash? ===");
+	// Add Metadata
+	Logger().Info("[TEST2] Sending Metadata packets...");
+	SendMetadata(socket);
+	
+	Logger().Info("=== TEST 2 COMPLETE - Does it crash? ===");
 }
 
 void CUserManager::SendMetadata(IExtendedSocket* socket)
