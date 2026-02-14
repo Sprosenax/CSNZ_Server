@@ -397,11 +397,12 @@ bool CUserManager::OnFavoriteSetBookmark(CReceivePacket* msg, IUser* user)
 
 void CUserManager::SendUserInventory(IUser* user)
 {
-	vector<CUserInventoryItem> items;
-	g_UserDatabase.GetInventoryItems(user->GetID(), items);
-
-	g_PacketManager.SendDefaultItems(user->GetExtendedSocket(), m_DefaultItems);
-	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
+	// TEMPORARY FIX: Don't send any inventory items to prevent crash
+	// The 2025 client crashes on invalid item IDs
+	
+	Logger().Info("[FIX] Skipping inventory send to prevent crash - user will have no items");
+	
+	// Don't send anything - client will have empty inventory
 }
 
 bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
@@ -802,7 +803,6 @@ void CUserManager::SendCrypt(IExtendedSocket* socket)
 void CUserManager::SendUserLoadout(IUser* user)
 {
 	// TEMPORARY FIX: Send empty loadout to prevent crash
-	// The 2025 client crashes if loadout references invalid item IDs
 	
 	vector<CUserLoadout> loadouts; // Empty
 	vector<CUserBuyMenu> buyMenu; // Empty
@@ -816,7 +816,7 @@ void CUserManager::SendUserLoadout(IUser* user)
 	g_PacketManager.SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
 	g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
 	
-	Logger().Info("[FIX] Sent empty loadout to prevent crash - user will have no equipped items");
+	Logger().Info("[FIX] Sent empty loadout to prevent crash");
 }
 
 void CUserManager::SendUserNotices(IUser* user)
