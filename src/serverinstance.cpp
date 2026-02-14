@@ -459,8 +459,8 @@ default:
     break;
 
 	delete msg;
+    }
 }
-
 void CServerInstance::OnSecondTick()
 {
 	// update current time
