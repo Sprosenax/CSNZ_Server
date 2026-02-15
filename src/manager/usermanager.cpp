@@ -803,20 +803,10 @@ void CUserManager::SendCrypt(IExtendedSocket* socket)
 
 void CUserManager::SendUserLoadout(IUser* user)
 {
-	// Send EMPTY loadout - database loadout has invalid item IDs
-	vector<CUserLoadout> loadouts; // Empty
-	vector<CUserBuyMenu> buyMenu; // Empty
-	vector<int> bookmark; // Empty
-
-	CUserCharacterExtended character(EXT_UFLAG_CURLOADOUT | EXT_UFLAG_CHARACTERID);
-	g_UserDatabase.GetCharacterExtended(user->GetID(), character);
-
-	// Send empty loadouts so client doesn't crash
-	g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, 0, loadouts);
-	g_PacketManager.SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
-	g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
+	// DISABLED: Causes 2025 client crash due to invalid item IDs in loadout
+	Logger().Info("[DISABLED] Skipping loadout - causes crash");
 	
-	Logger().Info("[FIX] Sent empty loadout - user must manually equip items in-game");
+	// TODO: Fix loadout item IDs to match 2025 client's item database
 }
 
 void CUserManager::SendUserNotices(IUser* user)

@@ -3711,8 +3711,14 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	msg->WriteUInt8(FavoritePacketType::SetLoadout);
 	msg->WriteUInt16(characterItemID);
 	msg->WriteUInt8(currentLoadout);
-	msg->WriteUInt8(LOADOUT_COUNT);
-	msg->WriteUInt8(LOADOUT_SLOT_COUNT); // items in loadout
+	
+	// 2025 client packet structure (from Peter's server):
+	// byte: 3 (unknown - maybe flags?)
+	// byte: 12 (LOADOUT_COUNT)
+	// byte: 4 (LOADOUT_SLOT_COUNT - items per loadout)
+	msg->WriteUInt8(3); // Unknown flag - Peter's server sends 3
+	msg->WriteUInt8(LOADOUT_COUNT); // 12 loadout slots
+	msg->WriteUInt8(LOADOUT_SLOT_COUNT); // 4 items per loadout
 
 	for (int i = 0; i < LOADOUT_COUNT; i++)
 	{
