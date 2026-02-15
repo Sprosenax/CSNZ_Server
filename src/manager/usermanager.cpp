@@ -803,10 +803,23 @@ void CUserManager::SendCrypt(IExtendedSocket* socket)
 
 void CUserManager::SendUserLoadout(IUser* user)
 {
-	// DISABLED: Causes 2025 client crash due to invalid item IDs in loadout
-	Logger().Info("[DISABLED] Skipping loadout - causes crash");
+	vector<CUserLoadout> loadouts;
+	g_UserDatabase.GetLoadouts(user->GetID(), loadouts);
+
+	vector<CUserBuyMenu> buyMenu;
+	g_UserDatabase.GetBuyMenu(user->GetID(), buyMenu);
+
+	CUserCharacterExtended character(EXT_UFLAG_CURLOADOUT | EXT_UFLAG_CHARACTERID);
+	g_UserDatabase.GetCharacterExtended(user->GetID(), character);
+
+	vector<int> bookmark;
+	g_UserDatabase.GetBookmark(user->GetID(), bookmark);
+
+	g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, character.curLoadout, loadouts);
+	g_PacketManager.SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
+	g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
 	
-	// TODO: Fix loadout item IDs to match 2025 client's item database
+	Logger().Info("[LOADOUT] Sent full loadout with fixed packet structure");
 }
 
 void CUserManager::SendUserNotices(IUser* user)
