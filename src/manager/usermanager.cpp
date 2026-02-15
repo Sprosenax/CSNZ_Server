@@ -397,13 +397,39 @@ bool CUserManager::OnFavoriteSetBookmark(CReceivePacket* msg, IUser* user)
 
 void CUserManager::SendUserInventory(IUser* user)
 {
+	#include "../valid_items_2025.h"
+	
 	vector<CUserInventoryItem> items;
 	g_UserDatabase.GetInventoryItems(user->GetID(), items);
+	
+	// Filter out invalid items and log them
+	vector<CUserInventoryItem> validItems;
+	int invalidCount = 0;
+	
+	for (const auto& item : items)
+	{
+		if (IsValid2025Item(item.m_nItemID))
+		{
+			validItems.push_back(item);
+		}
+		else
+		{
+			Logger().Warn("[ITEM_FILTER] User %d has INVALID item ID %d in slot %d - SKIPPING to prevent crash", 
+			              user->GetID(), item.m_nItemID, item.m_nSlot);
+			invalidCount++;
+		}
+	}
+	
+	if (invalidCount > 0)
+	{
+		Logger().Warn("[ITEM_FILTER] Filtered out %d invalid items for user %d", invalidCount, user->GetID());
+	}
 
-	Logger().Info("[TEST] Sending default items + %d user items from database", items.size());
+	Logger().Info("[TEST] Sending default items + %d user items from database (%d filtered out)", 
+	              validItems.size(), invalidCount);
 	
 	g_PacketManager.SendDefaultItems(user->GetExtendedSocket(), m_DefaultItems);
-	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
+	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), validItems);
 }
 
 bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
@@ -803,11 +829,61 @@ void CUserManager::SendCrypt(IExtendedSocket* socket)
 
 void CUserManager::SendUserLoadout(IUser* user)
 {
+	#include "../valid_items_2025.h"
+	
 	vector<CUserLoadout> loadouts;
 	g_UserDatabase.GetLoadouts(user->GetID(), loadouts);
 
+	// Filter out invalid items from loadouts and log them
+	for (auto& loadout : loadouts)
+	{
+		vector<int> validItems;
+		for (int itemID : loadout.items)
+		{
+			if (itemID == 0)
+			{
+				validItems.push_back(0); // Empty slot
+			}
+			else if (IsValid2025Item(itemID))
+			{
+				validItems.push_back(itemID);
+			}
+			else
+			{
+				Logger().Warn("[LOADOUT_FILTER] User %d has INVALID item ID %d in loadout - REPLACING with 0", 
+				              user->GetID(), itemID);
+				validItems.push_back(0); // Replace with empty slot
+			}
+		}
+		loadout.items = validItems;
+	}
+
 	vector<CUserBuyMenu> buyMenu;
 	g_UserDatabase.GetBuyMenu(user->GetID(), buyMenu);
+	
+	// Filter buy menu items too
+	for (auto& menu : buyMenu)
+	{
+		vector<int> validItems;
+		for (int itemID : menu.items)
+		{
+			if (itemID == 0)
+			{
+				validItems.push_back(0);
+			}
+			else if (IsValid2025Item(itemID))
+			{
+				validItems.push_back(itemID);
+			}
+			else
+			{
+				Logger().Warn("[BUYMENU_FILTER] User %d has INVALID item ID %d in buy menu - REPLACING with 0", 
+				              user->GetID(), itemID);
+				validItems.push_back(0);
+			}
+		}
+		menu.items = validItems;
+	}
 
 	CUserCharacterExtended character(EXT_UFLAG_CURLOADOUT | EXT_UFLAG_CHARACTERID);
 	g_UserDatabase.GetCharacterExtended(user->GetID(), character);
@@ -819,7 +895,7 @@ void CUserManager::SendUserLoadout(IUser* user)
 	g_PacketManager.SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
 	g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
 	
-	Logger().Info("[LOADOUT] Sent full loadout with fixed packet structure");
+	Logger().Info("[LOADOUT] Sent loadout with invalid item filtering enabled");
 }
 
 void CUserManager::SendUserNotices(IUser* user)
