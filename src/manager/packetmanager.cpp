@@ -3705,6 +3705,9 @@ void CPacketManager::SendQuestUpdateQuestStat(IExtendedSocket* socket, int flag,
 
 void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterItemID, int currentLoadout, const vector<CUserLoadout>& loadouts)
 {
+	// CRITICAL DEBUG - This proves the new code is running
+	Logger().Info("[LOADOUT_DEBUG] SendFavoriteLoadout V3 CALLED - loadouts.size=%d", loadouts.size());
+	
 	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
 	msg->BuildHeader();
 
@@ -3719,6 +3722,8 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	msg->WriteUInt8(0); // FIXED: Was 3, should be 0
 	msg->WriteUInt8(LOADOUT_COUNT); // 12 loadout slots
 	msg->WriteUInt8(LOADOUT_SLOT_COUNT); // 4 items per loadout
+	
+	Logger().Info("[LOADOUT_DEBUG] Header written: flag=0, count=12, slots=4");
 
 	// Send all 12 loadouts (2025 client expects exactly 12)
 	for (int i = 0; i < LOADOUT_COUNT; i++)
@@ -3731,6 +3736,7 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 			{
 				msg->WriteUInt16(loadouts[i].items[j]);
 			}
+			Logger().Info("[LOADOUT_DEBUG] Loadout %d: sent user items", i);
 		}
 		else
 		{
@@ -3739,14 +3745,19 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 			msg->WriteUInt16(2);    // Default secondary  
 			msg->WriteUInt16(161);  // Default melee
 			msg->WriteUInt16(31);   // Default grenade
+			Logger().Info("[LOADOUT_DEBUG] Loadout %d: sent default items", i);
 		}
 		
 		// 2025 client expects a string name for each loadout!
 		// For now, send empty string for all loadouts
 		msg->WriteString("");
 	}
+	
+	Logger().Info("[LOADOUT_DEBUG] All 12 loadouts written, sending packet...");
 
 	socket->Send(msg);
+	
+	Logger().Info("[LOADOUT_DEBUG] Packet sent successfully!");
 }
 
 void CPacketManager::SendFavoriteFastBuy(IExtendedSocket* socket, const vector<CUserFastBuy>& fastbuy)
