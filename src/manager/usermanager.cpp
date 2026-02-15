@@ -397,10 +397,30 @@ bool CUserManager::OnFavoriteSetBookmark(CReceivePacket* msg, IUser* user)
 
 void CUserManager::SendUserInventory(IUser* user)
 {
-	// DISABLED: Causes 2025 client crash due to invalid item IDs
-	Logger().Info("[DISABLED] Skipping inventory - causes crash");
+	// TEST: Send only ONE simple item to test packet structure
+	vector<CUserInventoryItem> items;
 	
-	// TODO: Fix item IDs to match 2025 client's item database
+	// Add one knife (item ID 161)
+	CUserInventoryItem knife;
+	knife.m_nSlot = 0;
+	knife.m_nItemID = 161;  // Knife
+	knife.m_nCount = 1;
+	knife.m_nStatus = 1;
+	knife.m_nInUse = 1;
+	knife.m_nObtainDate = 0;
+	knife.m_nExpiryDate = 0;
+	knife.m_nPaintID = 0;
+	knife.m_nEnhancementLevel = 0;
+	knife.m_nEnhancementExp = 0;
+	knife.m_nEnhanceValue = 0;
+	knife.m_nPartSlot1 = 0;
+	knife.m_nPartSlot2 = 0;
+	knife.m_nLockStatus = 0;
+	
+	items.push_back(knife);
+	
+	Logger().Info("[TEST] Sending ONE item (Knife ID=161) to test packet structure");
+	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 }
 
 bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
