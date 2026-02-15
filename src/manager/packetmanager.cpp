@@ -3720,27 +3720,30 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	msg->WriteUInt8(LOADOUT_COUNT); // 12 loadout slots
 	msg->WriteUInt8(LOADOUT_SLOT_COUNT); // 4 items per loadout
 
+	// Send all 12 loadouts (2025 client expects exactly 12)
 	for (int i = 0; i < LOADOUT_COUNT; i++)
 	{
-		if (i < loadouts.size())
+		// Write the 4 item IDs
+		if (i < loadouts.size() && loadouts[i].items.size() >= LOADOUT_SLOT_COUNT)
 		{
-			for (auto item : loadouts[i].items)
+			// User has this loadout - send their items
+			for (int j = 0; j < LOADOUT_SLOT_COUNT; j++)
 			{
-				msg->WriteUInt16(item);
+				msg->WriteUInt16(loadouts[i].items[j]);
 			}
-			// 2025 client expects a string name for each loadout!
-			msg->WriteString(loadouts[i].name.empty() ? "" : loadouts[i].name);
 		}
 		else
 		{
-			// Default loadout items
-			msg->WriteUInt16(12);
-			msg->WriteUInt16(2);
-			msg->WriteUInt16(161);
-			msg->WriteUInt16(31);
-			// Empty string for default loadouts
-			msg->WriteString("");
+			// No loadout data - send default items
+			msg->WriteUInt16(12);   // Default primary
+			msg->WriteUInt16(2);    // Default secondary  
+			msg->WriteUInt16(161);  // Default melee
+			msg->WriteUInt16(31);   // Default grenade
 		}
+		
+		// 2025 client expects a string name for each loadout!
+		// For now, send empty string for all loadouts
+		msg->WriteString("");
 	}
 
 	socket->Send(msg);
