@@ -803,21 +803,20 @@ void CUserManager::SendCrypt(IExtendedSocket* socket)
 
 void CUserManager::SendUserLoadout(IUser* user)
 {
-	vector<CUserLoadout> loadouts;
-	g_UserDatabase.GetLoadouts(user->GetID(), loadouts);
-
-	vector<CUserBuyMenu> buyMenu;
-	g_UserDatabase.GetBuyMenu(user->GetID(), buyMenu);
+	// Send EMPTY loadout - database loadout has invalid item IDs
+	vector<CUserLoadout> loadouts; // Empty
+	vector<CUserBuyMenu> buyMenu; // Empty
+	vector<int> bookmark; // Empty
 
 	CUserCharacterExtended character(EXT_UFLAG_CURLOADOUT | EXT_UFLAG_CHARACTERID);
 	g_UserDatabase.GetCharacterExtended(user->GetID(), character);
 
-	vector<int> bookmark;
-	g_UserDatabase.GetBookmark(user->GetID(), bookmark);
-
-	g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, character.curLoadout, loadouts);
+	// Send empty loadouts so client doesn't crash
+	g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, 0, loadouts);
 	g_PacketManager.SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
 	g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
+	
+	Logger().Info("[FIX] Sent empty loadout - user must manually equip items in-game");
 }
 
 void CUserManager::SendUserNotices(IUser* user)
