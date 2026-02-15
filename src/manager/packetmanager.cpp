@@ -3712,11 +3712,11 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	msg->WriteUInt16(characterItemID);
 	msg->WriteUInt8(currentLoadout);
 	
-	// 2025 client packet structure (from Peter's server):
-	// byte: 3 (unknown - maybe flags?)
+	// 2025 client packet structure:
+	// byte: 0 (NOT 3! This was the bug - should be 0x00)
 	// byte: 12 (LOADOUT_COUNT)
 	// byte: 4 (LOADOUT_SLOT_COUNT - items per loadout)
-	msg->WriteUInt8(3); // Unknown flag - Peter's server sends 3
+	msg->WriteUInt8(0); // FIXED: Was 3, should be 0
 	msg->WriteUInt8(LOADOUT_COUNT); // 12 loadout slots
 	msg->WriteUInt8(LOADOUT_SLOT_COUNT); // 4 items per loadout
 
@@ -3728,13 +3728,18 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 			{
 				msg->WriteUInt16(item);
 			}
+			// 2025 client expects a string name for each loadout!
+			msg->WriteString(loadouts[i].name.empty() ? "" : loadouts[i].name);
 		}
 		else
 		{
+			// Default loadout items
 			msg->WriteUInt16(12);
 			msg->WriteUInt16(2);
 			msg->WriteUInt16(161);
 			msg->WriteUInt16(31);
+			// Empty string for default loadouts
+			msg->WriteString("");
 		}
 	}
 

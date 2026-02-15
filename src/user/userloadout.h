@@ -2,20 +2,24 @@
 
 #include <vector>
 #include <map>
+#include <string>
 
 class CUserLoadout
 {
 public:
 	CUserLoadout()
 	{
+		name = ""; // Initialize name to empty string
 	}
 
 	CUserLoadout(std::vector<int>& slots)
 	{
 		items = slots;
+		name = ""; // Initialize name to empty string
 	}
 
 	std::vector<int> items;
+	std::string name; // Loadout name for 2025 client
 };
 
 class CUserBuyMenu
