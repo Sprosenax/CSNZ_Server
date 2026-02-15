@@ -14,6 +14,7 @@
 #include "csvtable.h"
 #include "serverinstance.h"
 #include "serverconfig.h"
+#include "valid_items_2025.h"
 
 using namespace std;
 
@@ -397,8 +398,6 @@ bool CUserManager::OnFavoriteSetBookmark(CReceivePacket* msg, IUser* user)
 
 void CUserManager::SendUserInventory(IUser* user)
 {
-	#include "../valid_items_2025.h"
-	
 	vector<CUserInventoryItem> items;
 	g_UserDatabase.GetInventoryItems(user->GetID(), items);
 	
@@ -829,8 +828,6 @@ void CUserManager::SendCrypt(IExtendedSocket* socket)
 
 void CUserManager::SendUserLoadout(IUser* user)
 {
-	#include "../valid_items_2025.h"
-	
 	vector<CUserLoadout> loadouts;
 	g_UserDatabase.GetLoadouts(user->GetID(), loadouts);
 
