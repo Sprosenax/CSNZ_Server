@@ -397,14 +397,13 @@ bool CUserManager::OnFavoriteSetBookmark(CReceivePacket* msg, IUser* user)
 
 void CUserManager::SendUserInventory(IUser* user)
 {
-	// TEST: Send ONLY default items (no user inventory)
-	Logger().Info("[TEST] Sending default items only");
-	g_PacketManager.SendDefaultItems(user->GetExtendedSocket(), m_DefaultItems);
+	vector<CUserInventoryItem> items;
+	g_UserDatabase.GetInventoryItems(user->GetID(), items);
+
+	Logger().Info("[TEST] Sending default items + %d user items from database", items.size());
 	
-	// Skip user inventory
-	// vector<CUserInventoryItem> items;
-	// g_UserDatabase.GetInventoryItems(user->GetID(), items);
-	// g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
+	g_PacketManager.SendDefaultItems(user->GetExtendedSocket(), m_DefaultItems);
+	g_PacketManager.SendInventoryAdd(user->GetExtendedSocket(), items);
 }
 
 bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
