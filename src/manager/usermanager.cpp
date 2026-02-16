@@ -607,21 +607,29 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 		g_MiniGameManager.SendWeaponReleaseUpdate(user);
 
 	SendUserInventory(user);
+	Logger().Info("After SendUserInventory\n");
 	SendUserLoadout(user);
+	Logger().Info("After SendUserLoadout\n");
 	SendUserNotices(user);
+	Logger().Info("After SendUserNotices\n");
 
 	g_PacketManager.SendShopUpdate(socket, g_ShopManager.GetProducts());
+	Logger().Info("After SendShopUpdate\n");
 	g_PacketManager.SendShopRecommendedProducts(socket, g_ShopManager.GetRecommendedProducts());
+	Logger().Info("After SendShopRecommendedProducts\n");
 	g_PacketManager.SendShopPopularProducts(socket, g_ShopManager.GetPopularProducts());
+	Logger().Info("After SendShopPopularProducts\n");
 
 	// CN: 欢迎来到CSN:S服务器! 我们的服务器是非商业性的, 不要相信任何人说的售卖CSOL私服的信息.\n官方Discord: https://discord.gg/EvUAY6D \n
 	const char* text = OBFUSCATE("EN: Welcome to the CSN:S server! The project is non-commercial. Don't trust people trying to sell you a server.\nServer developer Discord: https://discord.gg/EvUAY6D \n");
 	g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, text);
+	Logger().Info("After SendUMsgNoticeMsgBoxToUuid\n");
 
 	if (!g_pServerConfig->welcomeMessage.empty())
 		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, g_pServerConfig->welcomeMessage);
 
 	g_ChannelManager.JoinChannel(user, g_ChannelManager.channelServers[0]->GetID(), g_ChannelManager.channelServers[0]->GetChannels()[0]->GetID(), false);
+	Logger().Info("After JoinChannel\n");
 
 	for (auto& survey : g_pServerConfig->surveys)
 	{
@@ -630,11 +638,14 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 	}
 
 	g_PacketManager.SendLeaguePacket(socket);
+	Logger().Info("After SendLeaguePacket\n");
 
 	// FROM ~X.03.24: without this packet, client doesn't show inventory and user info on top left, weird
 	g_PacketManager.SendUpdateInfo(socket);
+	Logger().Info("After SendUpdateInfo\n");
 
 	g_PacketManager.SendVoxelURLs(socket, g_pServerConfig->voxelVxlURL, g_pServerConfig->voxelVmgURL);
+	Logger().Info("After SendVoxelURLs\n");
 }
 
 void CUserManager::SendMetadata(IExtendedSocket* socket)
@@ -760,13 +771,15 @@ void CUserManager::SendUserLoadout(IUser* user)
 	vector<int> bookmark;
 	g_UserDatabase.GetBookmark(user->GetID(), bookmark);
 
-	    Logger().Info("SendFavoriteLoadout: characterID=%d, curLoadout=%d, loadouts.size()=%d\n",
-        character.characterID, character.curLoadout, (int)loadouts.size());
-
-	//g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, character.curLoadout, loadouts);
+	Logger().Info("SendFavoriteLoadout: characterID=%d, curLoadout=%d, loadouts.size()=%d\n",
+		character.characterID, character.curLoadout, (int)loadouts.size());
+	g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, character.curLoadout, loadouts);
+	Logger().Info("After SendFavoriteLoadout\n");
 	//g_PacketManager.SendFavoriteFastBuy(user->GetExtendedSocket(), fastBuy);
 	g_PacketManager.SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
+	Logger().Info("After SendFavoriteBuyMenu\n");
 	g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
+	Logger().Info("After SendFavoriteBookmark\n");
 }
 	
 void CUserManager::SendUserNotices(IUser* user)
