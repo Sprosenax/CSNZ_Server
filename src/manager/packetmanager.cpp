@@ -3697,8 +3697,8 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	msg->BuildHeader();
 
 	msg->WriteUInt8(FavoritePacketType::SetLoadout);  // subtype 2
-	msg->WriteUInt16(0);                 // characterItemID
-	msg->WriteUInt8(0);                   // currentLoadout
+	msg->WriteUInt16(characterItemID);                 // characterItemID
+	msg->WriteUInt8(currentLoadout);                   // currentLoadout
 	msg->WriteUInt8(0);                                // v33[1] - unknown byte
 	
 	// Client reads THREE separate count bytes:
