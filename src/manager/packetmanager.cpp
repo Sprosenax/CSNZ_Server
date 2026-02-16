@@ -3705,7 +3705,7 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	const int SLOTS_PER_LOADOUT = 12;  // Total equipment slots per loadout
 	msg->WriteUInt8(LOADOUT_COUNT);      // v30 = outer loop count (12 loadouts)
 	msg->WriteUInt8(SLOTS_PER_LOADOUT);  // v10 = inner loop count (12 slots)
-	msg->WriteUInt8(SLOTS_PER_LOADOUT);  // v23 = multiplier (2*12 = 24 bytes per slot)
+	msg->WriteUInt8(10);  // v23 = multiplier (2*12 = 24 bytes per slot)
 
 	// Default items for weapon slots (rest are 0)
 	int defaultItems[12] = {
@@ -3742,7 +3742,7 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 			msg->WriteUInt16(itemID);
 			
 			// Pad to fill 24 bytes total (1 uint16 + 11 uint16 padding)
-			for (int k = 1; k < 12; k++)
+			for (int k = 1; k < 10; k++)
 			{
 				msg->WriteUInt16(0);
 			}
