@@ -616,8 +616,6 @@ void CPacketManager::SendStatistic(IExtendedSocket* socket)
 
 void CPacketManager::SendInventoryAdd(IExtendedSocket* socket, const vector<CUserInventoryItem>& items, int curSlot)
 {
-	return; // TEMPORARILY DISABLED FOR TESTING
-
 	int itemsToSend = items.size();
 	int itemStart = 0;
 	int itemSent = 0;
@@ -3256,8 +3254,6 @@ void CPacketManager::SendVoxelRoomList(IExtendedSocket* socket, const vector<IRo
 
 void CPacketManager::SendDefaultItems(IExtendedSocket* socket, const vector<CUserInventoryItem>& items)
 {
-	return; // TEMPORARILY DISABLED FOR TESTING
-	
 	CSendPacket* msg = CreatePacket(socket, PacketId::DefaultItems);
 	msg->BuildHeader();
 	msg->WriteUInt16(items.size());
@@ -3707,14 +3703,17 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	for (int i = 0; i < LOADOUT_COUNT; i++)
 	{
 		// Inner loop: for each slot (4 times)
-		// IDA shows: STRING first, then (2 * v23) = 8 bytes
+		// IDA shows: wide STRING first, then (2 * v23) = 8 bytes
 		for (int j = 0; j < LOADOUT_SLOT_COUNT; j++)
 		{
-			// Write STRING (empty string)
-			msg->WriteString("");
-			
+			// Write wide string null terminator (2 bytes: \x00\x00)
+			// client uses sub_26A0450 which reads UTF-16 wide strings
+			// Buffer::writeWStr is broken for wide chars, so write manually
+			msg->WriteUInt8(0);
+			msg->WriteUInt8(0);
+
 			// Write item ID for this slot
-			if (i < loadouts.size() && j < loadouts[i].items.size())
+			if (i < (int)loadouts.size() && j < (int)loadouts[i].items.size())
 			{
 				msg->WriteUInt16(loadouts[i].items[j]);
 			}
