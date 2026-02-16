@@ -3254,6 +3254,8 @@ void CPacketManager::SendVoxelRoomList(IExtendedSocket* socket, const vector<IRo
 
 void CPacketManager::SendDefaultItems(IExtendedSocket* socket, const vector<CUserInventoryItem>& items)
 {
+	return; // TEMPORARILY DISABLED FOR TESTING
+	
 	CSendPacket* msg = CreatePacket(socket, PacketId::DefaultItems);
 	msg->BuildHeader();
 	msg->WriteUInt16(items.size());
