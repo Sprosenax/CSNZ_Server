@@ -3699,13 +3699,13 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	msg->WriteUInt8(FavoritePacketType::SetLoadout);  // subtype 2
 	msg->WriteUInt16(characterItemID);                 // characterItemID
 	msg->WriteUInt8(currentLoadout);                   // currentLoadout
-	msg->WriteUInt8(0);                                // unknown byte
+	msg->WriteUInt8(0);                                // v33[1] - unknown byte
 	
-	// NEW CLIENT STRUCTURE (no strings, no inner loop):
-	// count byte determines size: 2*count bytes per loadout
-	// Client reads 12 fixed blocks of (2*count) bytes each
+	// Client reads THREE separate count bytes:
 	const int SLOTS_PER_LOADOUT = 12;  // Total equipment slots per loadout
-	msg->WriteUInt8(SLOTS_PER_LOADOUT);  // count (client calculates 2*12=24 bytes per loadout)
+	msg->WriteUInt8(LOADOUT_COUNT);      // v30 = outer loop count (12 loadouts)
+	msg->WriteUInt8(SLOTS_PER_LOADOUT);  // v10 = inner loop count (12 slots)
+	msg->WriteUInt8(SLOTS_PER_LOADOUT);  // v23 = multiplier (2*12 = 24 bytes per slot)
 
 	// Default items for weapon slots (rest are 0)
 	int defaultItems[12] = {
@@ -3716,11 +3716,16 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 		0, 0, 0, 0, 0, 0, 0, 0  // slots 4-11: equipment/other
 	};
 
-	// Write 12 loadouts, each with 12 uint16 slots (24 bytes per loadout)
+	// Write 12 loadouts × 12 slots (with string + 24 bytes per slot)
 	for (int i = 0; i < LOADOUT_COUNT; i++)
 	{
 		for (int j = 0; j < SLOTS_PER_LOADOUT; j++)
 		{
+			// Client reads STRING first (empty string = just \x00)
+			msg->WriteUInt8(0);
+			
+			// Then reads 2*v23 bytes = 24 bytes = 12 uint16 values
+			// But we only have item data for first 4 slots, rest are padding
 			uint16_t itemID = 0;
 			
 			// Map database slots (0-3) to first 4 client slots
@@ -3735,6 +3740,12 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 			// Else: slots 4-11 remain 0
 			
 			msg->WriteUInt16(itemID);
+			
+			// Pad to fill 24 bytes total (1 uint16 + 11 uint16 padding)
+			for (int k = 1; k < 12; k++)
+			{
+				msg->WriteUInt16(0);
+			}
 		}
 	}
 
