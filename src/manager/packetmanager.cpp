@@ -3714,10 +3714,8 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 		// IDA shows: wide STRING first, then (2 * v23) = 8 bytes
 		for (int j = 0; j < LOADOUT_SLOT_COUNT; j++)
 		{
-			// Write wide string null terminator (2 bytes: \x00\x00)
-			// client uses sub_26A0450 which reads UTF-16 wide strings
-			// Buffer::writeWStr is broken for wide chars, so write manually
-			msg->WriteUInt8(0);
+			// Write empty null-terminated string (1 byte: \x00)
+			// sub_26A0450 reads until \0, so empty string = just the terminator
 			msg->WriteUInt8(0);
 
 			// Write item ID for this slot

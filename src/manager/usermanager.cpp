@@ -607,7 +607,7 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 		g_MiniGameManager.SendWeaponReleaseUpdate(user);
 
 	SendUserInventory(user);
-	//SendUserLoadout(user);
+	SendUserLoadout(user);
 	SendUserNotices(user);
 
 	g_PacketManager.SendShopUpdate(socket, g_ShopManager.GetProducts());
@@ -741,7 +741,7 @@ void CUserManager::SendCrypt(IExtendedSocket* socket)
 		}
 	}
 }
-/*
+
 void CUserManager::SendUserLoadout(IUser* user)
 {
 	vector<CUserLoadout> loadouts;
@@ -765,7 +765,7 @@ void CUserManager::SendUserLoadout(IUser* user)
 	g_PacketManager.SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
 	g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
 }
-	*/
+	
 void CUserManager::SendUserNotices(IUser* user)
 {
 	for (auto& notice : g_pServerConfig->notices)
