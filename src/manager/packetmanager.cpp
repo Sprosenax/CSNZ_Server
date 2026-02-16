@@ -3700,14 +3700,16 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
     msg->WriteUInt16(characterItemID);
     msg->WriteUInt8(currentLoadout);
     msg->WriteUInt8(0);  // v33[1] unknown
-    msg->WriteUInt8(1);  // v30 = 1 outer iteration
-    msg->WriteUInt8(1);  // v10 = 1 inner iteration
+    msg->WriteUInt8(12); // v30 = 12 outer
+    msg->WriteUInt8(1);  // v10 = 1 inner
     msg->WriteUInt8(10); // v23 = 10
 
-    // just one slot, all zeros
-    msg->WriteUInt8(0);  // empty string
-    for (int k = 0; k < 10; k++)
-        msg->WriteUInt16(0);
+    for (int i = 0; i < 12; i++)
+    {
+        msg->WriteUInt8(0);  // empty string
+        for (int k = 0; k < 10; k++)
+            msg->WriteUInt16(0);
+    }
 
     socket->Send(msg);
 }
