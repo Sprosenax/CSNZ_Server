@@ -616,6 +616,8 @@ void CPacketManager::SendStatistic(IExtendedSocket* socket)
 
 void CPacketManager::SendInventoryAdd(IExtendedSocket* socket, const vector<CUserInventoryItem>& items, int curSlot)
 {
+	return; // TEMPORARILY DISABLED FOR TESTING
+
 	int itemsToSend = items.size();
 	int itemStart = 0;
 	int itemSent = 0;
