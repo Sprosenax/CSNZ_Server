@@ -741,7 +741,6 @@ void CUserManager::SendCrypt(IExtendedSocket* socket)
 		}
 	}
 }
-/*
 void CUserManager::SendUserLoadout(IUser* user)
 {
 	vector<CUserLoadout> loadouts;
@@ -765,7 +764,6 @@ void CUserManager::SendUserLoadout(IUser* user)
 	g_PacketManager.SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
 	g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
 }
-*/
 void CUserManager::SendUserNotices(IUser* user)
 {
 	for (auto& notice : g_pServerConfig->notices)
