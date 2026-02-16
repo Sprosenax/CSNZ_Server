@@ -3697,34 +3697,17 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
     msg->BuildHeader();
 
     msg->WriteUInt8(FavoritePacketType::SetLoadout);
-    msg->WriteUInt16(characterItemID);  // 2 bytes
-    msg->WriteUInt8(currentLoadout);    // 1 byte
-    msg->WriteUInt8(0);                 // v33[1] unknown
-    msg->WriteUInt8(LOADOUT_COUNT);     // v30 outer loop
-    msg->WriteUInt8(LOADOUT_COUNT);     // v10 inner loop (v24 = v10)
-    msg->WriteUInt8(10);                // v23 = 10 (2*10 = 20 bytes per slot)
+    msg->WriteUInt16(characterItemID);
+    msg->WriteUInt8(currentLoadout);
+    msg->WriteUInt8(0);  // v33[1] unknown
+    msg->WriteUInt8(1);  // v30 = 1 outer iteration
+    msg->WriteUInt8(1);  // v10 = 1 inner iteration
+    msg->WriteUInt8(10); // v23 = 10
 
-    static const uint16_t defaultItems[LOADOUT_SLOT_COUNT] = { 12, 2, 161, 31 };
-
-    for (int i = 0; i < LOADOUT_COUNT; i++)
-    {
-        for (int j = 0; j < LOADOUT_COUNT; j++)  // v10 = LOADOUT_COUNT = 12 slots
-        {
-            // string (empty)
-            msg->WriteUInt8(0);
-
-            // 2*v23 = 20 bytes = 10 uint16 values
-            for (int k = 0; k < 10; k++)
-            {
-                uint16_t itemID = 0;
-                if (i < (int)loadouts.size() && k < (int)loadouts[i].items.size())
-                    itemID = loadouts[i].items[k];
-                else if (k < LOADOUT_SLOT_COUNT)
-                    itemID = defaultItems[k];
-                msg->WriteUInt16(itemID);
-            }
-        }
-    }
+    // just one slot, all zeros
+    msg->WriteUInt8(0);  // empty string
+    for (int k = 0; k < 10; k++)
+        msg->WriteUInt16(0);
 
     socket->Send(msg);
 }
