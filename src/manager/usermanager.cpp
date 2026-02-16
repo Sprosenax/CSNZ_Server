@@ -761,9 +761,9 @@ void CUserManager::SendUserLoadout(IUser* user)
 	g_UserDatabase.GetBookmark(user->GetID(), bookmark);
 
 	//g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, character.curLoadout, loadouts);
-	//g_PacketManager.SendFavoriteFastBuy(user->GetExtendedSocket(), fastBuy);
+	g_PacketManager.SendFavoriteFastBuy(user->GetExtendedSocket(), fastBuy);
 	//g_PacketManager.SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
-	g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
+	//g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
 }
 	
 void CUserManager::SendUserNotices(IUser* user)
