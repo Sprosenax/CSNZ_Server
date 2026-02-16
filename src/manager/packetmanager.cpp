@@ -3693,33 +3693,33 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	msg->WriteUInt8(currentLoadout);                   // currentLoadout
 	msg->WriteUInt8(0);                                // unknown byte (from IDA)
 	msg->WriteUInt8(LOADOUT_COUNT);                    // v30 = 12 (outer loop count)
-	msg->WriteUInt8(LOADOUT_SLOT_COUNT);               // v10 = 4 (inner loop count)  
-	msg->WriteUInt8(LOADOUT_SLOT_COUNT);               // v23 = 4 (multiplier for 2*v23 = 8 bytes)
+	msg->WriteUInt8(LOADOUT_SLOT_COUNT);               // v10 = 4 (inner loop count)
+	msg->WriteUInt8(LOADOUT_SLOT_COUNT);               // v23 = 4 (multiplier, 2*v23 = 8 bytes per slot)
+
+	// Default items for each slot
+	int defaultItems[4] = {12, 2, 161, 31};
 
 	// Outer loop: for each loadout (12 times)
 	for (int i = 0; i < LOADOUT_COUNT; i++)
 	{
 		// Inner loop: for each slot (4 times)
-		// IDA shows: STRING first, then (2 * v23) bytes
+		// IDA shows: STRING first, then (2 * v23) = 8 bytes
 		for (int j = 0; j < LOADOUT_SLOT_COUNT; j++)
 		{
-			// Write STRING (empty string for now)
+			// Write STRING (empty string)
 			msg->WriteString("");
 			
-			// Write 2 * v23 = 2 * 4 = 8 bytes per slot
-			// That's 4 uint16s of padding/data per slot
+			// Write item ID for this slot
 			if (i < loadouts.size() && j < loadouts[i].items.size())
 			{
 				msg->WriteUInt16(loadouts[i].items[j]);
 			}
 			else
 			{
-				// Default items based on slot
-				int defaultItems[4] = {12, 2, 161, 31};
 				msg->WriteUInt16(defaultItems[j]);
 			}
 			
-			// Pad the remaining 6 bytes (3 uint16s) to make 8 bytes total
+			// Pad to make 8 bytes total (2 bytes item + 6 bytes padding)
 			msg->WriteUInt16(0);
 			msg->WriteUInt16(0);
 			msg->WriteUInt16(0);

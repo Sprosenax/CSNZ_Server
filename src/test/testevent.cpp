@@ -2,10 +2,8 @@
 #include "../event.h"
 #include <thread>
 #include <atomic>
-#include <chrono>
 
 using namespace std;
-using namespace std::chrono_literals;
 
 TEST_CASE("Events - test events")
 {

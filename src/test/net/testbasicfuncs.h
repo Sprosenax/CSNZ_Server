@@ -22,7 +22,7 @@ public:
 		m_bFailed = false;
 
 		m_Server.SetListener(this);
-		REQUIRE(m_Server.Start(port, 128, false) == true);
+		REQUIRE(m_Server.Start(port, 128) == true);
 	}
 
 	bool OnTCPConnectionCreated(IExtendedSocket* socket)

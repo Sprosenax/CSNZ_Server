@@ -9,8 +9,6 @@
 #include "common/logger.h"
 #include "common/utils.h"
 
-#include <algorithm>
-
 using namespace std;
 
 /**
@@ -230,27 +228,7 @@ CReceivePacket* CExtendedSocket::Read()
 		m_pMsg = new CReceivePacket(Buffer(packetDataBuf));
 		if (!m_pMsg->IsValid())
 		{
-			// DEBUG: Log what we actually received
 			Logger().Error("CExtendedSocket::Read(%s): received invalid packet\n", GetIP().c_str());
-			if (packetDataBuf.size() > 0)
-			{
-				Logger().Info("[DEBUG] Packet size: %d bytes\n", (int)packetDataBuf.size());
-				
-				// Build hex string
-				std::string hexStr = "[DEBUG] First 20 bytes (hex): ";
-				size_t maxBytes = packetDataBuf.size() < 20 ? packetDataBuf.size() : 20;
-				for (size_t i = 0; i < maxBytes; i++)
-				{
-					char buf[8];
-					sprintf(buf, "%02X ", (unsigned char)packetDataBuf[i]);
-					hexStr += buf;
-				}
-				Logger().Info("%s\n", hexStr.c_str());
-				
-				Logger().Info("[DEBUG] Expected signature: 0x%02X ('U'), Got: 0x%02X ('%c')\n", 
-				             TCP_PACKET_SIGNATURE, (unsigned char)packetDataBuf[0], 
-				             (packetDataBuf[0] >= 32 && packetDataBuf[0] < 127) ? packetDataBuf[0] : '?');
-			}
 			delete m_pMsg;
 			m_pMsg = NULL;
 			return NULL;
