@@ -3693,37 +3693,40 @@ void CPacketManager::SendQuestUpdateQuestStat(IExtendedSocket* socket, int flag,
 
 void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterItemID, int currentLoadout, const vector<CUserLoadout>& loadouts)
 {
-	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
-	msg->BuildHeader();
+    CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
+    msg->BuildHeader();
 
-	msg->WriteUInt8(FavoritePacketType::SetLoadout);
-	msg->WriteUInt16(characterItemID);
-	msg->WriteUInt8(currentLoadout);
-	msg->WriteUInt8(LOADOUT_COUNT);
-	msg->WriteUInt8(LOADOUT_SLOT_COUNT);
+    msg->WriteUInt8(FavoritePacketType::SetLoadout);
+    msg->WriteUInt16(characterItemID);  // 2 bytes
+    msg->WriteUInt8(currentLoadout);    // 1 byte
+    msg->WriteUInt8(0);                 // v33[1] unknown
+    msg->WriteUInt8(LOADOUT_COUNT);     // v30 outer loop
+    msg->WriteUInt8(LOADOUT_COUNT);     // v10 inner loop (v24 = v10)
+    msg->WriteUInt8(10);                // v23 = 10 (2*10 = 20 bytes per slot)
 
-	for (int i = 0; i < LOADOUT_COUNT; i++)
-	{
-		for (int j = 0; j < LOADOUT_SLOT_COUNT; j++)
-		{
-			uint16_t itemID = 0;
+    static const uint16_t defaultItems[LOADOUT_SLOT_COUNT] = { 12, 2, 161, 31 };
 
-			if (i < (int)loadouts.size() && j < (int)loadouts[i].items.size())
-			{
-				itemID = loadouts[i].items[j];
-			}
-			else
-			{
-				// defaults: primary, secondary, melee, throwable
-				static const uint16_t defaultItems[LOADOUT_SLOT_COUNT] = { 12, 2, 161, 31 };
-				itemID = defaultItems[j];
-			}
+    for (int i = 0; i < LOADOUT_COUNT; i++)
+    {
+        for (int j = 0; j < LOADOUT_COUNT; j++)  // v10 = LOADOUT_COUNT = 12 slots
+        {
+            // string (empty)
+            msg->WriteUInt8(0);
 
-			msg->WriteUInt16(itemID);
-		}
-	}
+            // 2*v23 = 20 bytes = 10 uint16 values
+            for (int k = 0; k < 10; k++)
+            {
+                uint16_t itemID = 0;
+                if (i < (int)loadouts.size() && k < (int)loadouts[i].items.size())
+                    itemID = loadouts[i].items[k];
+                else if (k < LOADOUT_SLOT_COUNT)
+                    itemID = defaultItems[k];
+                msg->WriteUInt16(itemID);
+            }
+        }
+    }
 
-	socket->Send(msg);
+    socket->Send(msg);
 }
 void CPacketManager::SendFavoriteFastBuy(IExtendedSocket* socket, const vector<CUserFastBuy>& fastbuy)
 {
