@@ -3699,39 +3699,42 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	msg->WriteUInt8(FavoritePacketType::SetLoadout);  // subtype 2
 	msg->WriteUInt16(characterItemID);                 // characterItemID
 	msg->WriteUInt8(currentLoadout);                   // currentLoadout
-	msg->WriteUInt8(0);                                // unknown byte (from IDA)
-	msg->WriteUInt8(LOADOUT_COUNT);                    // v30 = 12 (outer loop count)
-	msg->WriteUInt8(LOADOUT_SLOT_COUNT);               // v10 = 4 (inner loop count)
-	msg->WriteUInt8(LOADOUT_SLOT_COUNT);               // v23 = 4 (multiplier, 2*v23 = 8 bytes per slot)
+	msg->WriteUInt8(0);                                // unknown byte
+	
+	// NEW CLIENT STRUCTURE (no strings, no inner loop):
+	// count byte determines size: 2*count bytes per loadout
+	// Client reads 12 fixed blocks of (2*count) bytes each
+	const int SLOTS_PER_LOADOUT = 12;  // Total equipment slots per loadout
+	msg->WriteUInt8(SLOTS_PER_LOADOUT);  // count (client calculates 2*12=24 bytes per loadout)
 
-	// Default items for each slot
-	int defaultItems[4] = {12, 2, 161, 31};
+	// Default items for weapon slots (rest are 0)
+	int defaultItems[12] = {
+		12,  // slot 0: primary weapon
+		2,   // slot 1: secondary weapon  
+		161, // slot 2: melee weapon
+		31,  // slot 3: throwable
+		0, 0, 0, 0, 0, 0, 0, 0  // slots 4-11: equipment/other
+	};
 
-	// Outer loop: for each loadout (12 times)
+	// Write 12 loadouts, each with 12 uint16 slots (24 bytes per loadout)
 	for (int i = 0; i < LOADOUT_COUNT; i++)
 	{
-		// Inner loop: for each slot (4 times)
-		// IDA shows: wide STRING first, then (2 * v23) = 8 bytes
-		for (int j = 0; j < LOADOUT_SLOT_COUNT; j++)
+		for (int j = 0; j < SLOTS_PER_LOADOUT; j++)
 		{
-			// Write empty null-terminated string (1 byte: \x00)
-			// sub_26A0450 reads until \0, so empty string = just the terminator
-			msg->WriteUInt8(0);
-
-			// Write item ID for this slot
+			uint16_t itemID = 0;
+			
+			// Map database slots (0-3) to first 4 client slots
 			if (i < (int)loadouts.size() && j < (int)loadouts[i].items.size())
 			{
-				msg->WriteUInt16(loadouts[i].items[j]);
+				itemID = loadouts[i].items[j];
 			}
-			else
+			else if (j < 4)  // First 4 slots get defaults if not in DB
 			{
-				msg->WriteUInt16(defaultItems[j]);
+				itemID = defaultItems[j];
 			}
+			// Else: slots 4-11 remain 0
 			
-			// Pad to make 8 bytes total (2 bytes item + 6 bytes padding)
-			msg->WriteUInt16(0);
-			msg->WriteUInt16(0);
-			msg->WriteUInt16(0);
+			msg->WriteUInt16(itemID);
 		}
 	}
 
