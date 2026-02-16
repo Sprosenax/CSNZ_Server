@@ -763,7 +763,7 @@ void CUserManager::SendUserLoadout(IUser* user)
 	    Logger().Info("SendFavoriteLoadout: characterID=%d, curLoadout=%d, loadouts.size()=%d\n",
         character.characterID, character.curLoadout, (int)loadouts.size());
 
-	g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, character.curLoadout, loadouts);
+	//g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, character.curLoadout, loadouts);
 	//g_PacketManager.SendFavoriteFastBuy(user->GetExtendedSocket(), fastBuy);
 	g_PacketManager.SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
 	g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
