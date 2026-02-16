@@ -690,10 +690,6 @@ void CPacketManager::SendInventoryAdd(IExtendedSocket* socket, const vector<CUse
 					buf.writeUInt8(i++);
 					buf.writeUInt16_LE(0);
 				}
-
-				// 2025 client requires 8 extra bytes at end of each item
-				buf.writeUInt32_LE(0);
-				buf.writeUInt32_LE(0);
 			}
 
 			if ((buf.getBuffer().size() + msg->GetData().getBuffer().size()) > PACKET_MAX_SIZE)
@@ -3313,24 +3309,8 @@ void CPacketManager::SendDefaultItems(IExtendedSocket* socket, const vector<CUse
 				msg->WriteUInt8(i++);
 				msg->WriteUInt16(0);
 			}
-
-			// 2025 client requires 8 extra bytes at end of each item
-			msg->WriteUInt32(0);
-			msg->WriteUInt32(0);
 		}
 	}
-	socket->Send(msg);
-}
-
-// 2025 client: sends empty DefaultItems packet with subtype 0 (ID=152 sub=0)
-// Format: sub(u8) + count(u8) = 2 bytes total
-// This packet appears after shop packets and before channel join
-void CPacketManager::SendDefaultItemsUnk(IExtendedSocket* socket)
-{
-	CSendPacket* msg = CreatePacket(socket, PacketId::DefaultItems);
-	msg->BuildHeader();
-	msg->WriteUInt8(0);  // subtype 0
-	msg->WriteUInt8(0);  // count 0
 	socket->Send(msg);
 }
 
@@ -3708,39 +3688,41 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(FavoritePacketType::SetLoadout); // subtype 2
-	msg->WriteUInt16(characterItemID);
-	msg->WriteUInt8(currentLoadout);
-	
-	// IDA case 2 header structure - client reads these in order:
-	msg->WriteUInt8(0);                  // v33[1] - unknown byte
-	msg->WriteUInt8(LOADOUT_COUNT);      // v30 - outer loop count (12 loadouts)
-	msg->WriteUInt8(LOADOUT_SLOT_COUNT); // v10 - inner loop count (4 items per loadout)
-	msg->WriteUInt8(LOADOUT_SLOT_COUNT); // v23 - multiplier (4, used as 2*v23 = 8 bytes for items)
+	msg->WriteUInt8(FavoritePacketType::SetLoadout);  // subtype 2
+	msg->WriteUInt16(characterItemID);                 // characterItemID
+	msg->WriteUInt8(currentLoadout);                   // currentLoadout
+	msg->WriteUInt8(0);                                // unknown byte (from IDA)
+	msg->WriteUInt8(LOADOUT_COUNT);                    // v30 = 12 (outer loop count)
+	msg->WriteUInt8(LOADOUT_SLOT_COUNT);               // v10 = 4 (inner loop count)  
+	msg->WriteUInt8(LOADOUT_SLOT_COUNT);               // v23 = 4 (multiplier for 2*v23 = 8 bytes)
 
-	// Send all 12 loadouts
-	// CRITICAL: Client reads STRING FIRST, then items! (see IDA: sub_26A0450 before sub_26A0180)
+	// Outer loop: for each loadout (12 times)
 	for (int i = 0; i < LOADOUT_COUNT; i++)
 	{
-		// STEP 1: Write the STRING FIRST (client calls ReadString before reading items!)
-		msg->WriteString(""); // Empty name for now
-		
-		// STEP 2: Write the 4 item IDs AFTER the string
-		if (i < loadouts.size() && loadouts[i].items.size() >= LOADOUT_SLOT_COUNT)
+		// Inner loop: for each slot (4 times)
+		// IDA shows: STRING first, then (2 * v23) bytes
+		for (int j = 0; j < LOADOUT_SLOT_COUNT; j++)
 		{
-			// User has this loadout - send their items
-			for (int j = 0; j < LOADOUT_SLOT_COUNT; j++)
+			// Write STRING (empty string for now)
+			msg->WriteString("");
+			
+			// Write 2 * v23 = 2 * 4 = 8 bytes per slot
+			// That's 4 uint16s of padding/data per slot
+			if (i < loadouts.size() && j < loadouts[i].items.size())
 			{
 				msg->WriteUInt16(loadouts[i].items[j]);
 			}
-		}
-		else
-		{
-			// No loadout data - send default items
-			msg->WriteUInt16(12);   // Default primary
-			msg->WriteUInt16(2);    // Default secondary
-			msg->WriteUInt16(161);  // Default melee
-			msg->WriteUInt16(31);   // Default grenade
+			else
+			{
+				// Default items based on slot
+				int defaultItems[4] = {12, 2, 161, 31};
+				msg->WriteUInt16(defaultItems[j]);
+			}
+			
+			// Pad the remaining 6 bytes (3 uint16s) to make 8 bytes total
+			msg->WriteUInt16(0);
+			msg->WriteUInt16(0);
+			msg->WriteUInt16(0);
 		}
 	}
 
@@ -3754,43 +3736,16 @@ void CPacketManager::SendFavoriteFastBuy(IExtendedSocket* socket, const vector<C
 
 	msg->WriteUInt8(FavoritePacketType::SetFastBuy);
 
-	// IDA case 1 structure - client expects exactly 5 iterations
-	// Each iteration: 1 byte ID + STRING + 22 bytes (11 uint16s)
-	for (int i = 0; i < FASTBUY_COUNT; i++)
+	int i = 0;
+	for (auto &subFastBuy : fastbuy)
 	{
-		msg->WriteUInt8(i); // Submenu ID (0-4)
-		
-		if (i < fastbuy.size())
+		msg->WriteUInt8(i++);
+
+		msg->WriteString(subFastBuy.m_Name);
+
+		for (auto item : subFastBuy.m_Items)
 		{
-			// User has this fastbuy - send their name and items
-			msg->WriteString(fastbuy[i].m_Name);
-			
-			// Write items (pad to 11 if needed)
-			int itemsWritten = 0;
-			for (auto item : fastbuy[i].m_Items)
-			{
-				if (itemsWritten < FASTBUY_SLOT_COUNT)
-				{
-					msg->WriteUInt16(item);
-					itemsWritten++;
-				}
-			}
-			
-			// Pad remaining slots with 0
-			while (itemsWritten < FASTBUY_SLOT_COUNT)
-			{
-				msg->WriteUInt16(0);
-				itemsWritten++;
-			}
-		}
-		else
-		{
-			// Empty fastbuy slot
-			msg->WriteString("");
-			for (int j = 0; j < FASTBUY_SLOT_COUNT; j++)
-			{
-				msg->WriteUInt16(0);
-			}
+			msg->WriteUInt16(item);
 		}
 	}
 
@@ -3804,40 +3759,19 @@ void CPacketManager::SendFavoriteBuyMenu(IExtendedSocket* socket, const vector<C
 
 	msg->WriteUInt8(FavoritePacketType::SetBuyMenu);
 
-	// IDA case 0 structure - client expects exactly 17 submenus
-	// Each submenu: 1 byte ID + 24 bytes (12 uint16s)
-	for (int i = 0; i < BUYMENU_COUNT; i++)
+	int i = 0;
+	for (auto &subMenu : buyMenu)
 	{
-		msg->WriteUInt8(i); // Submenu ID (0-16)
+		msg->WriteUInt8(i++);
 
-		if (i < buyMenu.size())
+		for (auto item : subMenu.items)
 		{
-			// User has this submenu - send their items (pad to 12)
-			int itemsWritten = 0;
-			for (auto item : buyMenu[i].items)
-			{
-				if (itemsWritten < BUYMENU_SLOT_COUNT)
-				{
-					msg->WriteUInt16(item);
-					itemsWritten++;
-				}
-			}
-			
-			// Pad remaining slots to reach 12 uint16s (24 bytes)
-			while (itemsWritten < 12)
-			{
-				msg->WriteUInt16(0);
-				itemsWritten++;
-			}
+			msg->WriteUInt16(item);
 		}
-		else
-		{
-			// Empty submenu - send 12 zeros (24 bytes)
-			for (int j = 0; j < 12; j++)
-			{
-				msg->WriteUInt16(0);
-			}
-		}
+
+		msg->WriteUInt16(0);
+		msg->WriteUInt16(0);
+		msg->WriteUInt16(0);
 	}
 
 	socket->Send(msg);
@@ -3850,11 +3784,8 @@ void CPacketManager::SendFavoriteBookmark(IExtendedSocket* socket, const vector<
 
 	msg->WriteUInt8(FavoritePacketType::SetBookmark);
 
-	// IDA case 6 structure - client expects 2 header bytes:
-	// byte 1: outer loop count (number of bookmark groups)
-	// byte 2: inner loop count (items per group)
-	msg->WriteUInt8(1);                  // 1 bookmark group
-	msg->WriteUInt8(bookmark.size());    // items in that group
+	msg->WriteUInt8(bookmark.size());              // First header byte: count
+	msg->WriteUInt8(bookmark.size() > 0 ? 1 : 0);  // Second header byte: items per group (from IDA)
 	
 	for (auto itemID : bookmark)
 	{
@@ -7363,64 +7294,6 @@ void CPacketManager::SendVoxelURLs(IExtendedSocket* socket, const std::string& v
 	socket->Send(msg);
 }
 
-// 2025 client requires this packet after VoxelURLs.
-// It provides the list of map IDs available in the lobby selector.
-// Without it the client crashes ~1 second after the lobby loads.
-void CPacketManager::SendContentList(IExtendedSocket* socket)
-{
-	Logger().Info("[PACKET_SEND] >>> SendContentList: Creating packet ID=%d (ContentList)", (int)PacketId::ContentList);
-	
-	CSendPacket* msg = CreatePacket(socket, PacketId::ContentList);
-	msg->BuildHeader();
-
-	// subtype
-	msg->WriteUInt8(0);
-	// year (2025)
-	msg->WriteUInt16(2025);
-	// unk
-	msg->WriteUInt16(1);
-
-	// Available map IDs for the lobby - captured from 2025 reference server
-	static const uint16_t mapIds[] = {
-		74, 75, 76, 77, 85, 92, 98, 106, 112, 113, 117, 119, 121, 123, 126,
-		128, 131, 133, 134, 139, 143, 144, 146, 147, 148, 152, 156, 157, 158,
-		163, 164, 165, 170, 172, 173, 174, 183, 184, 185, 187, 188, 189, 194,
-		195, 196, 197, 198, 199, 200, 201, 203, 204, 205, 209, 210, 211, 212,
-		219, 220, 221, 235, 236, 237, 265, 269, 270, 272, 273, 274, 275, 278,
-		279, 280, 281, 285, 301, 302, 303, 304, 305, 315, 316, 320, 323, 324,
-		325, 328, 335, 336, 337, 354, 355, 361, 370, 371
-	};
-	const int mapCount = sizeof(mapIds) / sizeof(mapIds[0]);
-
-	msg->WriteUInt16(mapCount);
-	for (int i = 0; i < mapCount; i++)
-		msg->WriteUInt16(mapIds[i]);
-
-	Logger().Info("[PACKET_SEND] >>> SendContentList: Sending packet with %d maps", mapCount);
-	socket->Send(msg);
-	Logger().Info("[PACKET_SEND] >>> SendContentList: SENT");
-}
-
-// 2025 client: sends empty QuestBadgeShop list (ID=116).
-// Must be sent after ContentList or lobby will crash after 1 second.
-// Format: sub(u8) + unk(u8) + count_u32(u32) + items[count * 16 bytes]
-// Each item: itemUID(u64) + unk(u32) + unk(u16) + unk(u16)
-void CPacketManager::SendQuestBadgeShop(IExtendedSocket* socket)
-{
-	Logger().Info("[PACKET_SEND] >>> SendQuestBadgeShop: Creating packet ID=%d (QuestBadgeShop)", (int)PacketId::QuestBadgeShop);
-	
-	CSendPacket* msg = CreatePacket(socket, PacketId::QuestBadgeShop);
-	msg->BuildHeader();
-
-	msg->WriteUInt8(116); // subtype (same as packet ID)
-	msg->WriteUInt8(2);   // unk
-	msg->WriteUInt32(0);  // count = 0 (empty list)
-
-	Logger().Info("[PACKET_SEND] >>> SendQuestBadgeShop: Sending packet (empty list)");
-	socket->Send(msg);
-	Logger().Info("[PACKET_SEND] >>> SendQuestBadgeShop: SENT");
-}
-
 void CPacketManager::SendVoxelUnk38(IExtendedSocket* socket)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Voxel);
@@ -7456,8 +7329,6 @@ void CPacketManager::SendVoxelUnk46(IExtendedSocket* socket)
 
 void CPacketManager::SendVoxelUnk47(IExtendedSocket* socket)
 {
-	Logger().Info("[PACKET_SEND] >>> SendVoxelUnk47: Creating Voxel packet subtype 47");
-	
 	CSendPacket* msg = CreatePacket(socket, PacketId::Voxel);
 	msg->BuildHeader();
 
@@ -7465,9 +7336,7 @@ void CPacketManager::SendVoxelUnk47(IExtendedSocket* socket)
 
 	msg->WriteString("");
 
-	Logger().Info("[PACKET_SEND] >>> SendVoxelUnk47: Sending packet");
 	socket->Send(msg);
-	Logger().Info("[PACKET_SEND] >>> SendVoxelUnk47: SENT");
 }
 
 void CPacketManager::SendVoxelUnk58(IExtendedSocket* socket)
