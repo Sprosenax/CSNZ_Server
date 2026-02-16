@@ -606,7 +606,7 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 	if (g_pServerConfig->activeMiniGamesFlag & kEventFlag_WeaponRelease)
 		g_MiniGameManager.SendWeaponReleaseUpdate(user);
 
-	//SendUserInventory(user);
+	SendUserInventory(user);
 	//SendUserLoadout(user);
 	SendUserNotices(user);
 
