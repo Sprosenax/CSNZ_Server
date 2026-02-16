@@ -3696,62 +3696,35 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(FavoritePacketType::SetLoadout);  // subtype 2
-	msg->WriteUInt16(characterItemID);                 // characterItemID
-	msg->WriteUInt8(currentLoadout);                   // currentLoadout
-	msg->WriteUInt8(0);                                // v33[1] - unknown byte
-	
-	// Client reads THREE separate count bytes:
-	const int SLOTS_PER_LOADOUT = 12;  // Total equipment slots per loadout
-	msg->WriteUInt8(LOADOUT_COUNT);      // v30 = outer loop count (12 loadouts)
-	msg->WriteUInt8(0);  // v10 = inner loop count (12 slots)
-	msg->WriteUInt8(SLOTS_PER_LOADOUT);  // v23 = multiplier (2*12 = 24 bytes per slot)
+	msg->WriteUInt8(FavoritePacketType::SetLoadout);
+	msg->WriteUInt16(characterItemID);
+	msg->WriteUInt8(currentLoadout);
+	msg->WriteUInt8(LOADOUT_COUNT);
+	msg->WriteUInt8(LOADOUT_SLOT_COUNT);
 
-	// Default items for weapon slots (rest are 0)
-	int defaultItems[12] = {
-		12,  // slot 0: primary weapon
-		2,   // slot 1: secondary weapon  
-		161, // slot 2: melee weapon
-		31,  // slot 3: throwable
-		0, 0, 0, 0, 0, 0, 0, 0  // slots 4-11: equipment/other
-	};
-
-	// Write 12 loadouts × 12 slots (with string + 24 bytes per slot)
 	for (int i = 0; i < LOADOUT_COUNT; i++)
 	{
-		for (int j = 0; j < SLOTS_PER_LOADOUT; j++)
+		for (int j = 0; j < LOADOUT_SLOT_COUNT; j++)
 		{
-			// Client reads STRING first (empty string = just \x00)
-			msg->WriteUInt8(0);
-			
-			// Then reads 2*v23 bytes = 24 bytes = 12 uint16 values
-			// But we only have item data for first 4 slots, rest are padding
 			uint16_t itemID = 0;
-			
-			// Map database slots (0-3) to first 4 client slots
+
 			if (i < (int)loadouts.size() && j < (int)loadouts[i].items.size())
 			{
 				itemID = loadouts[i].items[j];
 			}
-			else if (j < 4)  // First 4 slots get defaults if not in DB
+			else
 			{
+				// defaults: primary, secondary, melee, throwable
+				static const uint16_t defaultItems[LOADOUT_SLOT_COUNT] = { 12, 2, 161, 31 };
 				itemID = defaultItems[j];
 			}
-			// Else: slots 4-11 remain 0
-			
+
 			msg->WriteUInt16(itemID);
-			
-			// Pad to fill 24 bytes total (1 uint16 + 11 uint16 padding)
-			for (int k = 1; k < 12; k++)
-			{
-				msg->WriteUInt16(0);
-			}
 		}
 	}
 
 	socket->Send(msg);
 }
-
 void CPacketManager::SendFavoriteFastBuy(IExtendedSocket* socket, const vector<CUserFastBuy>& fastbuy)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
