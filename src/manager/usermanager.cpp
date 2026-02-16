@@ -773,6 +773,21 @@ void CUserManager::SendUserLoadout(IUser* user)
 
 	Logger().Info("SendFavoriteLoadout: characterID=%d, curLoadout=%d, loadouts.size()=%d\n",
 		character.characterID, character.curLoadout, (int)loadouts.size());
+	
+	// Log first 3 loadouts to see actual data
+	for (int i = 0; i < (int)loadouts.size() && i < 3; i++) {
+		Logger().Info("  Loadout[%d]: items.size()=%d", i, (int)loadouts[i].items.size());
+		if (loadouts[i].items.size() > 0) {
+			Logger().Info(" [");
+			for (int j = 0; j < (int)loadouts[i].items.size() && j < 4; j++) {
+				Logger().Info("%d", loadouts[i].items[j]);
+				if (j < (int)loadouts[i].items.size() - 1) Logger().Info(", ");
+			}
+			Logger().Info("]");
+		}
+		Logger().Info("\n");
+	}
+	
 	g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, character.curLoadout, loadouts);
 	Logger().Info("After SendFavoriteLoadout\n");
 	//g_PacketManager.SendFavoriteFastBuy(user->GetExtendedSocket(), fastBuy);
