@@ -3704,7 +3704,7 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	// Client reads THREE separate count bytes:
 	const int SLOTS_PER_LOADOUT = 12;  // Total equipment slots per loadout
 	msg->WriteUInt8(0);      // v30 = outer loop count (12 loadouts)
-	msg->WriteUInt8(0);  // v10 = inner loop count (12 slots)
+	msg->WriteUInt8(SLOTS_PER_LOADOUT);  // v10 = inner loop count (12 slots)
 	msg->WriteUInt8(SLOTS_PER_LOADOUT);  // v23 = multiplier (2*12 = 24 bytes per slot)
 
 	// Default items for weapon slots (rest are 0)
