@@ -690,6 +690,10 @@ void CPacketManager::SendInventoryAdd(IExtendedSocket* socket, const vector<CUse
 					buf.writeUInt8(i++);
 					buf.writeUInt16_LE(0);
 				}
+
+				// new client (2025): two extra uint32s after unk array (v63, v64 in sub_25987F0)
+				buf.writeUInt32_LE(0);
+				buf.writeUInt32_LE(0);
 			}
 
 			if ((buf.getBuffer().size() + msg->GetData().getBuffer().size()) > PACKET_MAX_SIZE)
@@ -3309,6 +3313,10 @@ void CPacketManager::SendDefaultItems(IExtendedSocket* socket, const vector<CUse
 				msg->WriteUInt8(i++);
 				msg->WriteUInt16(0);
 			}
+
+			// new client (2025): two extra uint32s after unk array (v63, v64 in sub_25987F0)
+			msg->WriteUInt32(0);
+			msg->WriteUInt32(0);
 		}
 	}
 	socket->Send(msg);
