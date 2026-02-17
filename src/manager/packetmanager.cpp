@@ -3698,18 +3698,29 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 
     msg->WriteUInt8(FavoritePacketType::SetLoadout);
     msg->WriteUInt16(characterItemID);
-    msg->WriteUInt8(3);  // force currentLoadout = 3
-    msg->WriteUInt8(0);
-    msg->WriteUInt8(4);  // v30 = 4 outer
-    msg->WriteUInt8(4);  // v10 = 4 inner
-    msg->WriteUInt8(10); // v23 = 10
+    msg->WriteUInt8(currentLoadout);
+    msg->WriteUInt8(0);   // v33[1] unknown
+    msg->WriteUInt8(3);   // v30 = 3 outer (client has exactly 3 loadout slots)
+    msg->WriteUInt8(4);   // v10 = 4 inner (LOADOUT_SLOT_COUNT)
+    msg->WriteUInt8(10);  // v23 = 10 (2*10 = 20 bytes per slot)
 
-    for (int i = 0; i < 4; i++)
+    static const uint16_t defaultItems[LOADOUT_SLOT_COUNT] = { 12, 2, 161, 31 };
+
+    for (int i = 0; i < 3; i++)
     {
-        for (int j = 0; j < 4; j++)
+        for (int j = 0; j < LOADOUT_SLOT_COUNT; j++)
         {
-            msg->WriteUInt8(0);
-            for (int k = 0; k < 10; k++)
+            msg->WriteUInt8(0);  // empty string
+
+            uint16_t itemID = 0;
+            if (i < (int)loadouts.size() && j < (int)loadouts[i].items.size())
+                itemID = loadouts[i].items[j];
+            else
+                itemID = defaultItems[j];
+            msg->WriteUInt16(itemID);
+
+            // pad to 20 bytes total (1 item + 9 padding = 10 uint16s)
+            for (int k = 1; k < 10; k++)
                 msg->WriteUInt16(0);
         }
     }
