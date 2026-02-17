@@ -131,21 +131,6 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		}
 		break;
 	}
-	case 100:
-	{
-		// net info packet from new client
-		int unk1 = msg->ReadUInt32();
-		int unk2 = msg->ReadUInt16();
-		int unk3 = msg->ReadUInt8();
-		Logger().Warn("Packet_Host 100: %d, %d, %d\n", unk1, unk2, unk3);
-		break;
-	}
-	case 101:
-	{
-		// game start signal from new client
-		Logger().Warn("Packet_Host 101 (GameStart)\n");
-		break;
-	}
 	case 103:
 	{
 		int subtype = msg->ReadUInt8();
