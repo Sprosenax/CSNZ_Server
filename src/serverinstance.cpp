@@ -450,6 +450,72 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 	case PacketId::Voxel:
 		g_VoxelManager.OnPacket(msg, s);
 		break;
+	case PacketId::UserStartStep:
+	{
+		// client sends this on login to advance startup sequence
+		// just log and ignore for now
+		Logger().Warn("Packet_UserStartStep received (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case PacketId::Steam:
+	{
+		// client sends steam friend list info; only fires if Steam is running
+		Logger().Warn("Packet_Steam received (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case PacketId::ClanTotalWar:
+	{
+		int subtype = msg->ReadUInt8();
+		Logger().Warn("Packet_ClanTotalWar subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		break;
+	}
+	case PacketId::Expedition:
+	{
+		int subtype = msg->ReadUInt8();
+		Logger().Warn("Packet_Expedition subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		break;
+	}
+	case PacketId::VipSystem:
+	{
+		int subtype = msg->ReadUInt8();
+		Logger().Warn("Packet_VipSystem subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		break;
+	}
+	case PacketId::ScenarioTX:
+	{
+		int subtype = msg->ReadUInt8();
+		Logger().Warn("Packet_ScenarioTX subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		break;
+	}
+	case PacketId::PopularInfo:
+	{
+		Logger().Warn("Packet_PopularInfo received (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case PacketId::HonorShop:
+	{
+		int subtype = msg->ReadUInt8();
+		Logger().Warn("Packet_HonorShop subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		break;
+	}
+	case PacketId::MileageShop:
+	{
+		int subtype = msg->ReadUInt8();
+		Logger().Warn("Packet_MileageShop subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		break;
+	}
+	case PacketId::QuestBadgeShop:
+	{
+		int subtype = msg->ReadUInt8();
+		Logger().Warn("Packet_QuestBadgeShop subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		break;
+	}
+	case PacketId::Metadata:
+	{
+		int subtype = msg->ReadUInt8();
+		Logger().Warn("Packet_Metadata subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		break;
+	}
 	default:
 		Logger().Warn("Unimplemented packet: %d\n", msg->GetID());
 		break;

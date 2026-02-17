@@ -940,6 +940,12 @@ bool CUserManager::OnUpdateInfoPacket(CReceivePacket* msg, IExtendedSocket* sock
 		user->UpdateChatColor(chatColorID);
 		break;
 	}
+	case 9: // inventory/craft tab switch
+	{
+		int unk = msg->ReadUInt32();
+		Logger().Warn("CUserManager::OnUpdateInfoPacket type 9: unk: %d\n", unk);
+		break;
+	}
 	case 12: // called when click on inventory button
 		break;
 	default:

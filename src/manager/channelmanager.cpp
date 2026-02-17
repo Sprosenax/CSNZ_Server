@@ -120,6 +120,13 @@ bool CChannelManager::OnRoomRequest(CReceivePacket* msg, IExtendedSocket* socket
 	case InRoomType::RoomListRequest:
 		g_PacketManager.SendRoomListFull(socket, channelServers[0]->GetChannels()[0]->GetRooms());
 		break;
+	case 26:
+	{
+		// Quick Start / Zombie Z / Training Ground recommended room list request
+		int count = msg->ReadUInt8();
+		Logger().Warn("Room request type 26 (recommended rooms): count: %d\n", count);
+		break;
+	}
 	case 27:
 		break;
 	case InRoomType::SetZBAddonsRequest:

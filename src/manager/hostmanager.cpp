@@ -131,6 +131,86 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		}
 		break;
 	}
+	case 100:
+	{
+		// net info packet from new client
+		int unk1 = msg->ReadUInt32();
+		int unk2 = msg->ReadUInt16();
+		int unk3 = msg->ReadUInt8();
+		Logger().Warn("Packet_Host 100: %d, %d, %d\n", unk1, unk2, unk3);
+		break;
+	}
+	case 101:
+	{
+		// game start signal from new client
+		Logger().Warn("Packet_Host 101 (GameStart)\n");
+		break;
+	}
+	case 103:
+	{
+		int subtype = msg->ReadUInt8();
+		if (subtype == 3)
+		{
+			int unk1 = msg->ReadUInt32();
+			int unk2 = msg->ReadUInt32();
+			Logger().Warn("Packet_Host 103-3: %d, %d\n", unk1, unk2);
+		}
+		else
+		{
+			Logger().Warn("Packet_Host 103 unknown subtype: %d\n", subtype);
+		}
+		break;
+	}
+	case 104:
+	{
+		Logger().Warn("Packet_Host 104 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 105:
+	{
+		Logger().Warn("Packet_Host 105 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 107:
+	{
+		Logger().Warn("Packet_Host 107 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 108:
+	{
+		Logger().Warn("Packet_Host 108 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 109:
+	{
+		Logger().Warn("Packet_Host 109 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 110:
+	{
+		Logger().Warn("Packet_Host 110 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 112:
+	{
+		Logger().Warn("Packet_Host 112 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 113:
+	{
+		Logger().Warn("Packet_Host 113 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 114:
+	{
+		Logger().Warn("Packet_Host 114 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 115:
+	{
+		Logger().Warn("Packet_Host 115 (len: %d)\n", msg->GetLength());
+		break;
+	}
 	default:
 		Logger().Warn("Packet_Host type %d is not implemented, len: %d\n", type, msg->GetLength());
 		break;
