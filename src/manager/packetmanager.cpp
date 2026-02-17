@@ -3709,7 +3709,7 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
         for (int j = 0; j < 4; j++)
         {
             msg->WriteUInt8(0);
-            msg->WriteUInt16(j == 0 ? 12 : 0);  // only slot 0 gets item 12
+            msg->WriteUInt16(j == 0 ? 2 : 0);  // only slot 0 gets item 2
             for (int k = 1; k < 10; k++)
                 msg->WriteUInt16(0);
         }
