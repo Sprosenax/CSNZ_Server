@@ -122,9 +122,9 @@ bool CChannelManager::OnRoomRequest(CReceivePacket* msg, IExtendedSocket* socket
 		break;
 	case 26:
 	{
-		// Quick Start / Zombie Z / Training Ground recommended room list request
+		// Quick Start / Zombie Z / Training Ground - respond with empty recommended room list
 		int count = msg->ReadUInt8();
-		Logger().Warn("Room request type 26 (recommended rooms): count: %d\n", count);
+		g_PacketManager.SendRecommendedRooms(socket);
 		break;
 	}
 	case 27:

@@ -349,6 +349,11 @@ bool CUserManager::OnFavoritePacket(CReceivePacket* msg, IExtendedSocket* socket
 		return OnFavoriteSetFastBuy(msg, user); // obsolete
 	case FavoritePacketType::SetLoadout:
 		return OnFavoriteSetLoadout(msg, user);
+	case 3: // new loadout tab switch in updated client
+	{
+		int unk = msg->ReadUInt8();
+		break;
+	}
 	case FavoritePacketType::SetBookmark:
 		return OnFavoriteSetBookmark(msg, user);
 	default:
@@ -940,10 +945,9 @@ bool CUserManager::OnUpdateInfoPacket(CReceivePacket* msg, IExtendedSocket* sock
 		user->UpdateChatColor(chatColorID);
 		break;
 	}
-	case 9: // inventory/craft tab switch
+	case 9: // inventory/craft tab switch - 1 byte tab index, no response needed
 	{
-		int unk = msg->ReadUInt32();
-		Logger().Warn("CUserManager::OnUpdateInfoPacket type 9: unk: %d\n", unk);
+		int tabIndex = msg->ReadUInt8();
 		break;
 	}
 	case 12: // called when click on inventory button

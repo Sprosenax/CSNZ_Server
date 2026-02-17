@@ -134,7 +134,12 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 	case 103:
 	{
 		int subtype = msg->ReadUInt8();
-		if (subtype == 3)
+		if (subtype == 0)
+		{
+			// no additional data
+			Logger().Warn("Packet_Host 103-0\n");
+		}
+		else if (subtype == 3)
 		{
 			int unk1 = msg->ReadUInt32();
 			int unk2 = msg->ReadUInt32();

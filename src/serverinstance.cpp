@@ -452,68 +452,89 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 		break;
 	case PacketId::UserStartStep:
 	{
-		// client sends this on login to advance startup sequence
-		// just log and ignore for now
-		Logger().Warn("Packet_UserStartStep received (len: %d)\n", msg->GetLength());
+		g_PacketManager.SendUserStartStep(s);
 		break;
 	}
 	case PacketId::Steam:
 	{
-		// client sends steam friend list info; only fires if Steam is running
-		Logger().Warn("Packet_Steam received (len: %d)\n", msg->GetLength());
+		// client sends steam friend list info; no response needed
 		break;
 	}
 	case PacketId::ClanTotalWar:
 	{
 		int subtype = msg->ReadUInt8();
-		Logger().Warn("Packet_ClanTotalWar subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		g_PacketManager.SendClanTotalWar(s, subtype);
 		break;
 	}
 	case PacketId::Expedition:
 	{
 		int subtype = msg->ReadUInt8();
-		Logger().Warn("Packet_Expedition subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		g_PacketManager.SendExpedition(s, subtype);
 		break;
 	}
 	case PacketId::VipSystem:
 	{
 		int subtype = msg->ReadUInt8();
-		Logger().Warn("Packet_VipSystem subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		g_PacketManager.SendVipSystem(s, subtype);
 		break;
 	}
 	case PacketId::ScenarioTX:
 	{
 		int subtype = msg->ReadUInt8();
-		Logger().Warn("Packet_ScenarioTX subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		g_PacketManager.SendScenarioTX(s, subtype);
+		break;
+	}
+	case PacketId::RibbonSystem:
+	{
+		int subtype = msg->ReadUInt8();
+		g_PacketManager.SendRibbonSystem(s, subtype);
 		break;
 	}
 	case PacketId::PopularInfo:
 	{
-		Logger().Warn("Packet_PopularInfo received (len: %d)\n", msg->GetLength());
+		// no response needed
+		break;
+	}
+	case PacketId::Dictionary:
+	{
+		int subtype = msg->ReadUInt8();
+		Logger().Warn("Packet_Dictionary subtype: %d (len: %d)\n", subtype, msg->GetLength());
 		break;
 	}
 	case PacketId::HonorShop:
 	{
 		int subtype = msg->ReadUInt8();
-		Logger().Warn("Packet_HonorShop subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		g_PacketManager.SendHonorShop(s, subtype);
 		break;
 	}
 	case PacketId::MileageShop:
 	{
 		int subtype = msg->ReadUInt8();
-		Logger().Warn("Packet_MileageShop subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		g_PacketManager.SendMileageShop(s, subtype);
 		break;
 	}
 	case PacketId::QuestBadgeShop:
 	{
 		int subtype = msg->ReadUInt8();
-		Logger().Warn("Packet_QuestBadgeShop subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		g_PacketManager.SendQuestBadgeShop(s, subtype);
 		break;
 	}
 	case PacketId::Metadata:
 	{
 		int subtype = msg->ReadUInt8();
 		Logger().Warn("Packet_Metadata subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		break;
+	}
+	case PacketId::RibbonSystem:
+	{
+		int subtype = msg->ReadUInt8();
+		Logger().Warn("Packet_RibbonSystem subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		break;
+	}
+	case PacketId::Dictionary:
+	{
+		int subtype = msg->ReadUInt8();
+		Logger().Warn("Packet_Dictionary subtype: %d (len: %d)\n", subtype, msg->GetLength());
 		break;
 	}
 	default:
