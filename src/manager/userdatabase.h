@@ -117,7 +117,7 @@ public:
 	virtual int SetAddons(int userID, std::vector<int>& addons);
 
 	virtual int GetVip(int userID, UserVip& vip);
-virtual int UpdateVip(int userID, const UserVip& vip);
+	virtual int UpdateVip(int userID, const UserVip& vip);
 
 	virtual int GetUsersAssociatedWithIP(const std::string& ip, std::vector<CUserData>& userData);
 	virtual int GetUsersAssociatedWithHWID(const std::vector<unsigned char>& hwid, std::vector<CUserData>& userData);
