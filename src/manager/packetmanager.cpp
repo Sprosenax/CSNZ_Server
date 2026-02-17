@@ -7353,6 +7353,21 @@ void CPacketManager::SendClanTotalWar(IExtendedSocket* socket, int subtype)
 	CSendPacket* msg = CreatePacket(socket, PacketId::ClanTotalWar);
 	msg->BuildHeader();
 	msg->WriteUInt8(subtype);
+	switch (subtype)
+	{
+	case 12:
+		// sub_2083910: uint16, uint8, uint32, uint32, uint32, uint32, then sub_2081580: uint8 count
+		msg->WriteUInt16(0); // warID
+		msg->WriteUInt8(0);  // flag
+		msg->WriteUInt32(0); // field1
+		msg->WriteUInt32(0); // field2
+		msg->WriteUInt32(0); // size
+		msg->WriteUInt32(0); // field3
+		msg->WriteUInt8(0);  // sub_2081580 count=0, no entries
+		break;
+	default:
+		break;
+	}
 	socket->Send(msg);
 }
 
@@ -7369,6 +7384,14 @@ void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype)
 	CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
 	msg->BuildHeader();
 	msg->WriteUInt8(subtype);
+	switch (subtype)
+	{
+	case 9:
+		msg->WriteUInt8(0); // count = 0, client loops count times reading entries
+		break;
+	default:
+		break;
+	}
 	socket->Send(msg);
 }
 
