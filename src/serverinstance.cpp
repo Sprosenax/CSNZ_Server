@@ -525,18 +525,6 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 		Logger().Warn("Packet_Metadata subtype: %d (len: %d)\n", subtype, msg->GetLength());
 		break;
 	}
-	case PacketId::RibbonSystem:
-	{
-		int subtype = msg->ReadUInt8();
-		Logger().Warn("Packet_RibbonSystem subtype: %d (len: %d)\n", subtype, msg->GetLength());
-		break;
-	}
-	case PacketId::Dictionary:
-	{
-		int subtype = msg->ReadUInt8();
-		Logger().Warn("Packet_Dictionary subtype: %d (len: %d)\n", subtype, msg->GetLength());
-		break;
-	}
 	default:
 		Logger().Warn("Unimplemented packet: %d\n", msg->GetID());
 		break;

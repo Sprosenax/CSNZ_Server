@@ -257,4 +257,15 @@ public:
 	virtual void SendVoxelUnk46(IExtendedSocket* socket) = 0;
 	virtual void SendVoxelUnk47(IExtendedSocket* socket) = 0;
 	virtual void SendVoxelUnk58(IExtendedSocket* socket) = 0;
+
+	virtual void SendUserStartStep(IExtendedSocket* socket) = 0;
+	virtual void SendClanTotalWar(IExtendedSocket* socket, int subtype) = 0;
+	virtual void SendExpedition(IExtendedSocket* socket, int subtype) = 0;
+	virtual void SendVipSystem(IExtendedSocket* socket, int subtype) = 0;
+	virtual void SendScenarioTX(IExtendedSocket* socket, int subtype) = 0;
+	virtual void SendRibbonSystem(IExtendedSocket* socket, int subtype) = 0;
+	virtual void SendHonorShop(IExtendedSocket* socket, int subtype) = 0;
+	virtual void SendMileageShop(IExtendedSocket* socket, int subtype) = 0;
+	virtual void SendQuestBadgeShop(IExtendedSocket* socket, int subtype) = 0;
+	virtual void SendRecommendedRooms(IExtendedSocket* socket) = 0;
 };

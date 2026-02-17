@@ -7340,3 +7340,83 @@ void CPacketManager::SendVoxelUnk58(IExtendedSocket* socket)
 
 	socket->Send(msg);
 }
+void CPacketManager::SendUserStartStep(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::UserStartStep);
+	msg->BuildHeader();
+	msg->WriteUInt8(0);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendClanTotalWar(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::ClanTotalWar);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendExpedition(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Expedition);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendScenarioTX(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::ScenarioTX);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendRibbonSystem(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::RibbonSystem);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendHonorShop(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::HonorShop);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendMileageShop(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::MileageShop);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendQuestBadgeShop(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::QuestBadgeShop);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendRecommendedRooms(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
+	msg->BuildHeader();
+	msg->WriteUInt8(26);
+	msg->WriteUInt8(0);
+	socket->Send(msg);
+}

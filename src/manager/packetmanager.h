@@ -285,6 +285,17 @@ public:
 	void SendVoxelUnk47(IExtendedSocket* socket);
 	void SendVoxelUnk58(IExtendedSocket* socket);
 
+	void SendUserStartStep(IExtendedSocket* socket);
+	void SendClanTotalWar(IExtendedSocket* socket, int subtype);
+	void SendExpedition(IExtendedSocket* socket, int subtype);
+	void SendVipSystem(IExtendedSocket* socket, int subtype);
+	void SendScenarioTX(IExtendedSocket* socket, int subtype);
+	void SendRibbonSystem(IExtendedSocket* socket, int subtype);
+	void SendHonorShop(IExtendedSocket* socket, int subtype);
+	void SendMileageShop(IExtendedSocket* socket, int subtype);
+	void SendQuestBadgeShop(IExtendedSocket* socket, int subtype);
+	void SendRecommendedRooms(IExtendedSocket* socket);
+
 private:
 	CBinMetadata* LoadBinaryMetadata(const char* fileName, bool zip = false);
 
