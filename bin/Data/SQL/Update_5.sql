@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS UserVip (
+    userID      INTEGER NOT NULL,
+    vipLevel    INTEGER NOT NULL DEFAULT 0,
+    vipExp      INTEGER NOT NULL DEFAULT 0,
+    vipGrade    INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (userID),
+    FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE
+);
+
+PRAGMA user_version = 5;

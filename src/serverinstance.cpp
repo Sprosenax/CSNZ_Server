@@ -472,12 +472,27 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 		g_PacketManager.SendExpedition(s, subtype);
 		break;
 	}
-	case PacketId::VipSystem:
-	{
-		int subtype = msg->ReadUInt8();
-		g_PacketManager.SendVipSystem(s, subtype);
-		break;
-	}
+case PacketId::VipSystem:
+{
+    IUser* user = g_UserManager.GetUserBySocket(s);
+    if (!user) break;
+    int subtype = msg->ReadUInt8();
+    UserVip vip;
+    g_UserDatabase.GetVip(user->GetID(), vip);
+    switch (subtype)
+    {
+    case 0:  // player opened VIP tab
+        g_PacketManager.SendVipSystemInfo(s, vip);
+        break;
+    case 9:  // login time request
+        g_PacketManager.SendVipSystemLogin(s, vip);
+        break;
+    default:
+        Logger().Warn("VipSystem unknown subtype: %d\n", subtype);
+        break;
+    }
+    break;
+}
 	case PacketId::ScenarioTX:
 	{
 		int subtype = msg->ReadUInt8();

@@ -7379,20 +7379,43 @@ void CPacketManager::SendExpedition(IExtendedSocket* socket, int subtype)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype)
+// Sent on login (subtype 9) — VIP reward item list (empty for now)
+void CPacketManager::SendVipSystemLogin(IExtendedSocket* socket, const UserVip& vip)
 {
-	CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
-	msg->BuildHeader();
-	msg->WriteUInt8(subtype);
-	switch (subtype)
-	{
-	case 9:
-		msg->WriteUInt8(0); // count = 0, client loops count times reading entries
-		break;
-	default:
-		break;
-	}
-	socket->Send(msg);
+    CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
+    msg->BuildHeader();
+    msg->WriteUInt8(9);      // subtype
+    msg->WriteUInt8(0);      // count = 0 (no reward entries)
+    socket->Send(msg);
+    delete msg;
+}
+
+// Sent when player opens VIP tab (subtype 0)
+void CPacketManager::SendVipSystemInfo(IExtendedSocket* socket, const UserVip& vip)
+{
+    CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
+    msg->BuildHeader();
+    msg->WriteUInt8(0);              // subtype
+    msg->WriteUInt8(vip.vipLevel);   // this+40: VIP level
+    msg->WriteUInt32(vip.vipExp);    // this+48: total spent/exp
+    msg->WriteUInt32(0);             // this+52: unknown uint32
+    msg->WriteUInt8(vip.vipGrade);   // this+44: VIP grade
+    msg->WriteUInt8(0);              // this+56: flag byte
+    msg->WriteUInt8(0);              // count of bonus entries = 0 (no loop)
+    socket->Send(msg);
+    delete msg;
+}
+
+// Subtype 6 — two status bytes, always zero
+void CPacketManager::SendVipSystemUnk6(IExtendedSocket* socket)
+{
+    CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
+    msg->BuildHeader();
+    msg->WriteUInt8(6);   // subtype
+    msg->WriteUInt8(0);   // this+128
+    msg->WriteUInt8(0);   // this+132
+    socket->Send(msg);
+    delete msg;
 }
 
 void CPacketManager::SendScenarioTX(IExtendedSocket* socket, int subtype)

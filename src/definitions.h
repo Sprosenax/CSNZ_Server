@@ -1093,6 +1093,14 @@ struct UserSession
 	int uptime;
 };
 
+struct UserVip
+{
+    UserVip() : vipLevel(0), vipExp(0), vipGrade(0) {}
+    int vipLevel;   // VIP tier (0 = no VIP)
+    int vipExp;     // total money spent / VIP points accumulated
+    int vipGrade;   // sub-grade within tier
+};
+
 // like UserSession struct but server-side (without accessing db)
 struct Session
 {

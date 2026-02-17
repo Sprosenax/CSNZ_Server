@@ -288,8 +288,9 @@ public:
 	void SendUserStartStep(IExtendedSocket* socket);
 	void SendClanTotalWar(IExtendedSocket* socket, int subtype);
 	void SendExpedition(IExtendedSocket* socket, int subtype);
-	void SendVipSystem(IExtendedSocket* socket, int subtype);
-	void SendScenarioTX(IExtendedSocket* socket, int subtype);
+void SendVipSystemLogin(IExtendedSocket* socket, const UserVip& vip);   // subtype 9 — sent on login
+void SendVipSystemInfo(IExtendedSocket* socket, const UserVip& vip);    // subtype 0 — sent when VIP tab opened
+void SendVipSystemUnk6(IExtendedSocket* socket);                        // subtype 6 — two zero bytes	void SendScenarioTX(IExtendedSocket* socket, int subtype);
 	void SendRibbonSystem(IExtendedSocket* socket, int subtype);
 	void SendHonorShop(IExtendedSocket* socket, int subtype);
 	void SendMileageShop(IExtendedSocket* socket, int subtype);
