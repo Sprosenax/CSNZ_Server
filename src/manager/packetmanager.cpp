@@ -3698,8 +3698,8 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 
     msg->WriteUInt8(FavoritePacketType::SetLoadout);
     msg->WriteUInt16(characterItemID);
-    msg->WriteUInt8(currentLoadout);
-    msg->WriteUInt8(0);  // v33[1] unknown
+    msg->WriteUInt8(3);  // force currentLoadout = 3
+    msg->WriteUInt8(0);
     msg->WriteUInt8(4);  // v30 = 4 outer
     msg->WriteUInt8(4);  // v10 = 4 inner
     msg->WriteUInt8(10); // v23 = 10
