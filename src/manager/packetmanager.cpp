@@ -3700,11 +3700,11 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
     msg->WriteUInt16(characterItemID);
     msg->WriteUInt8(currentLoadout);
     msg->WriteUInt8(0);  // v33[1] unknown
-    msg->WriteUInt8(3);  // v30 = 3 outer
+    msg->WriteUInt8(4);  // v30 = 4 outer
     msg->WriteUInt8(4);  // v10 = 4 inner
     msg->WriteUInt8(10); // v23 = 10
 
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
         {
