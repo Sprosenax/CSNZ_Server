@@ -3704,12 +3704,14 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
     msg->WriteUInt8(4);
     msg->WriteUInt8(10);
 
+    static const uint16_t defaultItems[4] = { 24, 6, 161, 31 };
+
     for (int i = 0; i < 3; i++)
     {
         for (int j = 0; j < 4; j++)
         {
             msg->WriteUInt8(0);
-            msg->WriteUInt16(j == 0 ? 2 : 0);  // only slot 0 gets item 2
+            msg->WriteUInt16(defaultItems[j]);
             for (int k = 1; k < 10; k++)
                 msg->WriteUInt16(0);
         }
