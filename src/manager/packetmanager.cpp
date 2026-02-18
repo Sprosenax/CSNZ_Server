@@ -3693,32 +3693,65 @@ void CPacketManager::SendQuestUpdateQuestStat(IExtendedSocket* socket, int flag,
 
 void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterItemID, int currentLoadout, const vector<CUserLoadout>& loadouts)
 {
-    CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
-    msg->BuildHeader();
+	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
+	msg->BuildHeader();
 
-    msg->WriteUInt8(FavoritePacketType::SetLoadout);
-    msg->WriteUInt16(characterItemID);
-    msg->WriteUInt8(currentLoadout);
-    msg->WriteUInt8(0);
-    msg->WriteUInt8(3);
-    msg->WriteUInt8(4);
-    msg->WriteUInt8(10);
+	msg->WriteUInt8(FavoritePacketType::SetLoadout);  // subtype 2
+	msg->WriteUInt16(characterItemID);                 // characterItemID
+	msg->WriteUInt8(currentLoadout);                   // currentLoadout
+	msg->WriteUInt8(0);                                // v33[1] - unknown byte
+	
+	// Client reads THREE separate count bytes:
+	const int SLOTS_PER_LOADOUT = 12;  // Total equipment slots per loadout
+	msg->WriteUInt8(LOADOUT_COUNT);      // v30 = outer loop count (12 loadouts)
+	msg->WriteUInt8(SLOTS_PER_LOADOUT);  // v10 = inner loop count (12 slots)
+	msg->WriteUInt8(10);  // v23 = multiplier (2*12 = 24 bytes per slot)
 
-    static const uint16_t defaultItems[4] = { 24, 6, 161, 31 };
+	// Default items for weapon slots (rest are 0)
+	int defaultItems[12] = {
+		12,  // slot 0: primary weapon
+		2,   // slot 1: secondary weapon  
+		161, // slot 2: melee weapon
+		31,  // slot 3: throwable
+		0, 0, 0, 0, 0, 0, 0, 0  // slots 4-11: equipment/other
+	};
 
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 4; j++)
-        {
-            msg->WriteUInt8(0);
-            msg->WriteUInt16(defaultItems[j]);
-            for (int k = 1; k < 10; k++)
-                msg->WriteUInt16(0);
-        }
-    }
+	// Write 12 loadouts × 12 slots (with string + 24 bytes per slot)
+	for (int i = 0; i < LOADOUT_COUNT; i++)
+	{
+		for (int j = 0; j < SLOTS_PER_LOADOUT; j++)
+		{
+			// Client reads STRING first (empty string = just \x00)
+			msg->WriteUInt8(0);
+			
+			// Then reads 2*v23 bytes = 24 bytes = 12 uint16 values
+			// But we only have item data for first 4 slots, rest are padding
+			uint16_t itemID = 0;
+			
+			// Map database slots (0-3) to first 4 client slots
+			if (i < (int)loadouts.size() && j < (int)loadouts[i].items.size())
+			{
+				itemID = loadouts[i].items[j];
+			}
+			else if (j < 4)  // First 4 slots get defaults if not in DB
+			{
+				itemID = defaultItems[j];
+			}
+			// Else: slots 4-11 remain 0
+			
+			msg->WriteUInt16(itemID);
+			
+			// Pad to fill 24 bytes total (1 uint16 + 11 uint16 padding)
+			for (int k = 1; k < 10; k++)
+			{
+				msg->WriteUInt16(0);
+			}
+		}
+	}
 
-    socket->Send(msg);
+	socket->Send(msg);
 }
+
 void CPacketManager::SendFavoriteFastBuy(IExtendedSocket* socket, const vector<CUserFastBuy>& fastbuy)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
@@ -7340,11 +7373,24 @@ void CPacketManager::SendVoxelUnk58(IExtendedSocket* socket)
 
 	socket->Send(msg);
 }
+// ---- New client stub responses ----
+
 void CPacketManager::SendUserStartStep(IExtendedSocket* socket)
 {
+	// client sends this during login sequence; respond with step 0 to advance
 	CSendPacket* msg = CreatePacket(socket, PacketId::UserStartStep);
 	msg->BuildHeader();
 	msg->WriteUInt8(0);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendRibbonSystem(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::RibbonSystem);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	if (subtype == 0)
+		msg->WriteUInt16(0); // count = 0
 	socket->Send(msg);
 }
 
@@ -7353,21 +7399,6 @@ void CPacketManager::SendClanTotalWar(IExtendedSocket* socket, int subtype)
 	CSendPacket* msg = CreatePacket(socket, PacketId::ClanTotalWar);
 	msg->BuildHeader();
 	msg->WriteUInt8(subtype);
-	switch (subtype)
-	{
-	case 12:
-		// sub_2083910: uint16, uint8, uint32, uint32, uint32, uint32, then sub_2081580: uint8 count
-		msg->WriteUInt16(0); // warID
-		msg->WriteUInt8(0);  // flag
-		msg->WriteUInt32(0); // field1
-		msg->WriteUInt32(0); // field2
-		msg->WriteUInt32(0); // size
-		msg->WriteUInt32(0); // field3
-		msg->WriteUInt8(0);  // sub_2081580 count=0, no entries
-		break;
-	default:
-		break;
-	}
 	socket->Send(msg);
 }
 
@@ -7379,43 +7410,35 @@ void CPacketManager::SendExpedition(IExtendedSocket* socket, int subtype)
 	socket->Send(msg);
 }
 
-// Sent on login (subtype 9) — VIP reward item list (empty for now)
 void CPacketManager::SendVipSystemLogin(IExtendedSocket* socket, const UserVip& vip)
 {
-    CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
-    msg->BuildHeader();
-    msg->WriteUInt8(9);      // subtype
-    msg->WriteUInt8(0);      // count = 0 (no reward entries)
-    socket->Send(msg);
-    delete msg;
+	CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
+	msg->BuildHeader();
+	msg->WriteUInt8(9); // subtype 9 = login
+	msg->WriteUInt8(vip.vipLevel);
+	msg->WriteUInt32(vip.vipExp);
+	msg->WriteUInt8(vip.vipGrade);
+	socket->Send(msg);
 }
 
-// Sent when player opens VIP tab (subtype 0)
 void CPacketManager::SendVipSystemInfo(IExtendedSocket* socket, const UserVip& vip)
 {
-    CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
-    msg->BuildHeader();
-    msg->WriteUInt8(0);              // subtype
-    msg->WriteUInt8(vip.vipLevel);   // this+40: VIP level
-    msg->WriteUInt32(vip.vipExp);    // this+48: total spent/exp
-    msg->WriteUInt32(0);             // this+52: unknown uint32
-    msg->WriteUInt8(vip.vipGrade);   // this+44: VIP grade
-    msg->WriteUInt8(0);              // this+56: flag byte
-    msg->WriteUInt8(0);              // count of bonus entries = 0 (no loop)
-    socket->Send(msg);
-    delete msg;
+	CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
+	msg->BuildHeader();
+	msg->WriteUInt8(0); // subtype 0 = VIP tab opened
+	msg->WriteUInt8(vip.vipLevel);
+	msg->WriteUInt32(vip.vipExp);
+	msg->WriteUInt8(vip.vipGrade);
+	socket->Send(msg);
 }
 
-// Subtype 6 — two status bytes, always zero
 void CPacketManager::SendVipSystemUnk6(IExtendedSocket* socket)
 {
-    CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
-    msg->BuildHeader();
-    msg->WriteUInt8(6);   // subtype
-    msg->WriteUInt8(0);   // this+128
-    msg->WriteUInt8(0);   // this+132
-    socket->Send(msg);
-    delete msg;
+	CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
+	msg->BuildHeader();
+	msg->WriteUInt8(6); // subtype 6
+	msg->WriteUInt16(0); // two zero bytes
+	socket->Send(msg);
 }
 
 void CPacketManager::SendScenarioTX(IExtendedSocket* socket, int subtype)
@@ -7426,19 +7449,13 @@ void CPacketManager::SendScenarioTX(IExtendedSocket* socket, int subtype)
 	socket->Send(msg);
 }
 
-void CPacketManager::SendRibbonSystem(IExtendedSocket* socket, int subtype)
-{
-	CSendPacket* msg = CreatePacket(socket, PacketId::RibbonSystem);
-	msg->BuildHeader();
-	msg->WriteUInt8(subtype);
-	socket->Send(msg);
-}
-
 void CPacketManager::SendHonorShop(IExtendedSocket* socket, int subtype)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::HonorShop);
 	msg->BuildHeader();
 	msg->WriteUInt8(subtype);
+	if (subtype == 1)
+		msg->WriteUInt32(0); // count = 0
 	socket->Send(msg);
 }
 
@@ -7460,9 +7477,10 @@ void CPacketManager::SendQuestBadgeShop(IExtendedSocket* socket, int subtype)
 
 void CPacketManager::SendRecommendedRooms(IExtendedSocket* socket)
 {
+	// respond to room request type 26 with empty list
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 	msg->WriteUInt8(26);
-	msg->WriteUInt8(0);
+	msg->WriteUInt8(0); // count = 0
 	socket->Send(msg);
 }
