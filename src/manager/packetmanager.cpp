@@ -7383,44 +7383,90 @@ void CPacketManager::SendExpedition(IExtendedSocket* socket, int subtype)
 void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype, const UserVip& vip)
 {
 	// Calculate vipLevel from vipExp using configured tiers
-	int level = 0;
+	int currentRank = 0;
 	if (g_pServerConfig && !g_pServerConfig->vipTiers.empty())
 	{
 		for (int i = (int)g_pServerConfig->vipTiers.size() - 1; i >= 0; i--)
 		{
 			if (vip.vipExp >= g_pServerConfig->vipTiers[i].pointsRequired)
 			{
-				level = i;
+				currentRank = i;
 				break;
 			}
 		}
 	}
 
-	// Calculate progress within current tier (as grade 0-100)
-	int grade = 0;
-	if (g_pServerConfig && level < (int)g_pServerConfig->vipTiers.size() - 1)
-	{
-		int curThreshold  = g_pServerConfig->vipTiers[level].pointsRequired;
-		int nextThreshold = g_pServerConfig->vipTiers[level + 1].pointsRequired;
-		int range = nextThreshold - curThreshold;
-		if (range > 0)
-			grade = (int)(((vip.vipExp - curThreshold) * 100) / range);
-	}
-	else if (level == (int)g_pServerConfig->vipTiers.size() - 1)
-	{
-		grade = 100; // max tier = full bar
-	}
+	// Next rank = currentRank + 1 (capped at max)
+	int nextRank = currentRank;
+	if (g_pServerConfig && currentRank < (int)g_pServerConfig->vipTiers.size() - 1)
+		nextRank = currentRank + 1;
 
 	CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
 	msg->BuildHeader();
 	msg->WriteUInt8(subtype);
 	switch (subtype)
 	{
-	case 0: // VIP tab opened - send level/exp/grade
-		msg->WriteUInt8(level);
-		msg->WriteUInt32(vip.vipExp);
-		msg->WriteUInt8(grade);
+	case 0:
+		// Structure from IDA case 0:
+		// ReadUInt8  -> this+40 = currentRank
+		// ReadUInt32 -> this+48 = paymentsLast90Days
+		// ReadUInt32 -> this+52 = totalCashSpent (vipExp)
+		// ReadUInt8  -> this+44 = nextRank
+		// ReadUInt8  -> this+56 = unknown flag
+		// ReadUInt8  -> count of duration entries (loop: type+uint32+uint32)
+		msg->WriteUInt8(currentRank);
+		msg->WriteUInt32(vip.vipExp);    // payments last 90 days = same as total for now
+		msg->WriteUInt32(vip.vipExp);    // total cash spent
+		msg->WriteUInt8(nextRank);
+		msg->WriteUInt8(0);              // unknown flag
+		msg->WriteUInt8(0);              // duration entry count = 0
 		break;
+	case 8:
+	{
+		// 8 rank entries x 36 bytes each = 288 bytes
+		// Each entry (IDA case 8 do-while loop):
+		// ReadUInt8  -> rank ID
+		// ReadUInt32 -> mileage payback
+		// ReadUInt8  -> sub-item count, then loop reading UInt8 per item
+		// ReadUInt8  -> +25
+		// ReadUInt8  -> +24
+		// ReadUInt8  -> +26 (zombie scenario)
+		// ReadUInt8  -> +27 (login supplies)
+		// ReadUInt8  -> +28
+		// ReadUInt8  -> +30
+		// ReadUInt8  -> +31
+		// ReadUInt8  -> +32
+		// ReadUInt32 -> +20 as float (mileage rate)
+		int tierCount = g_pServerConfig ? (int)g_pServerConfig->vipTiers.size() : 0;
+		for (int i = 0; i < 8; i++)
+		{
+			const CServerConfig::VipTier* tier = (g_pServerConfig && i < tierCount)
+				? &g_pServerConfig->vipTiers[i] : nullptr;
+
+			msg->WriteUInt8(i);   // rank ID = index
+			msg->WriteUInt32(tier ? tier->mileagePayback : 0);
+			// sub-items
+			int subCount = tier ? (int)tier->subItems.size() : 0;
+			msg->WriteUInt8(subCount);
+			for (int j = 0; j < subCount; j++)
+				msg->WriteUInt8(tier->subItems[j]);
+			// 8 flag bytes
+			msg->WriteUInt8(tier ? tier->unk25          : 0);
+			msg->WriteUInt8(tier ? tier->unk24          : 0);
+			msg->WriteUInt8(tier ? tier->zombieScenario : 0);
+			msg->WriteUInt8(tier ? tier->loginSupplies  : 0);
+			msg->WriteUInt8(tier ? tier->unk28          : 0);
+			msg->WriteUInt8(tier ? tier->unk30          : 0);
+			msg->WriteUInt8(tier ? tier->unk31          : 0);
+			msg->WriteUInt8(tier ? tier->unk32          : 0);
+			// mileage rate as uint32 (float bits)
+			float rate = tier ? tier->mileageRate : 0.0f;
+			uint32_t rateBits;
+			memcpy(&rateBits, &rate, sizeof(rateBits));
+			msg->WriteUInt32(rateBits);
+		}
+		break;
+	}
 	case 9: // login time - send count=0 (empty list)
 		msg->WriteUInt8(0);
 		break;

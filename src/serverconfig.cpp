@@ -960,14 +960,14 @@ const char* defaultServerConfig = R"(
 	},
 	"DedicatedServerWhitelist": [ "127.0.0.1" ],
 	"VipTiers": [
-		{ "Name": "None",     "PointsRequired": 0      },
-		{ "Name": "Bronze",   "PointsRequired": 5000   },
-		{ "Name": "Silver",   "PointsRequired": 20000  },
-		{ "Name": "Gold",     "PointsRequired": 50000  },
-		{ "Name": "Platinum", "PointsRequired": 100000 },
-		{ "Name": "Diamond",  "PointsRequired": 200000 },
-		{ "Name": "Master",   "PointsRequired": 350000 },
-		{ "Name": "VVIP",     "PointsRequired": 500000 }
+		{ "Name": "None",     "PointsRequired": 0,      "MileagePayback": 0, "MileageRate": 0.0, "LoginSupplies": 0, "ZombieScenario": 0, "SubItems": [] },
+		{ "Name": "Bronze",   "PointsRequired": 5000,   "MileagePayback": 0, "MileageRate": 0.0, "LoginSupplies": 0, "ZombieScenario": 0, "SubItems": [] },
+		{ "Name": "Silver",   "PointsRequired": 20000,  "MileagePayback": 0, "MileageRate": 0.0, "LoginSupplies": 0, "ZombieScenario": 0, "SubItems": [] },
+		{ "Name": "Gold",     "PointsRequired": 50000,  "MileagePayback": 0, "MileageRate": 0.0, "LoginSupplies": 0, "ZombieScenario": 0, "SubItems": [] },
+		{ "Name": "Platinum", "PointsRequired": 100000, "MileagePayback": 0, "MileageRate": 0.0, "LoginSupplies": 0, "ZombieScenario": 0, "SubItems": [] },
+		{ "Name": "Diamond",  "PointsRequired": 200000, "MileagePayback": 0, "MileageRate": 0.0, "LoginSupplies": 0, "ZombieScenario": 0, "SubItems": [] },
+		{ "Name": "Master",   "PointsRequired": 350000, "MileagePayback": 0, "MileageRate": 0.0, "LoginSupplies": 0, "ZombieScenario": 0, "SubItems": [] },
+		{ "Name": "VVIP",     "PointsRequired": 500000, "MileagePayback": 0, "MileageRate": 0.0, "LoginSupplies": 0, "ZombieScenario": 0, "SubItems": [] }
 	]
 }
 )";
@@ -1401,23 +1401,36 @@ bool CServerConfig::Load()
 			for (auto& jTier : cfg["VipTiers"])
 			{
 				VipTier tier;
-				tier.name = jTier.value("Name", "");
+				tier.name           = jTier.value("Name", "");
 				tier.pointsRequired = jTier.value("PointsRequired", 0);
+				tier.mileagePayback = jTier.value("MileagePayback", 0);
+				tier.mileageRate    = jTier.value("MileageRate", 0.0f);
+				tier.unk24          = jTier.value("Unk24", 0);
+				tier.unk25          = jTier.value("Unk25", 0);
+				tier.zombieScenario = jTier.value("ZombieScenario", 0);
+				tier.loginSupplies  = jTier.value("LoginSupplies", 0);
+				tier.unk28          = jTier.value("Unk28", 0);
+				tier.unk30          = jTier.value("Unk30", 0);
+				tier.unk31          = jTier.value("Unk31", 0);
+				tier.unk32          = jTier.value("Unk32", 0);
+				if (jTier.contains("SubItems"))
+					for (auto& item : jTier["SubItems"])
+						tier.subItems.push_back(item.get<int>());
 				vipTiers.push_back(tier);
 			}
 		}
 		else
 		{
-			// default 8 tiers: None + 7 paid tiers
+			// default 8 tiers: None + 7 paid tiers (all privileges at 0 by default)
 			vipTiers = {
-				{ "None",     0      },
-				{ "Bronze",   5000   },
-				{ "Silver",   20000  },
-				{ "Gold",     50000  },
-				{ "Platinum", 100000 },
-				{ "Diamond",  200000 },
-				{ "Master",   350000 },
-				{ "VVIP",     500000 }
+				{ "None",     0,      0, 0.0f, {}, 0, 0, 0, 0, 0, 0, 0, 0 },
+				{ "Bronze",   5000,   0, 0.0f, {}, 0, 0, 0, 0, 0, 0, 0, 0 },
+				{ "Silver",   20000,  0, 0.0f, {}, 0, 0, 0, 0, 0, 0, 0, 0 },
+				{ "Gold",     50000,  0, 0.0f, {}, 0, 0, 0, 0, 0, 0, 0, 0 },
+				{ "Platinum", 100000, 0, 0.0f, {}, 0, 0, 0, 0, 0, 0, 0, 0 },
+				{ "Diamond",  200000, 0, 0.0f, {}, 0, 0, 0, 0, 0, 0, 0, 0 },
+				{ "Master",   350000, 0, 0.0f, {}, 0, 0, 0, 0, 0, 0, 0, 0 },
+				{ "VVIP",     500000, 0, 0.0f, {}, 0, 0, 0, 0, 0, 0, 0, 0 },
 			};
 		}
 	}
