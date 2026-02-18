@@ -7462,11 +7462,9 @@ void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype, const U
 			msg->WriteUInt8(tier ? tier->unk30          : 0);
 			msg->WriteUInt8(tier ? tier->unk31          : 0);
 			msg->WriteUInt8(tier ? tier->unk32          : 0);
-			// +20 field: PointsRequired as float - drives cash bar threshold markers
-			float threshold = tier ? (float)tier->pointsRequired : 0.0f;
-			uint32_t thresholdBits;
-			memcpy(&thresholdBits, &threshold, sizeof(thresholdBits));
-			msg->WriteUInt32(thresholdBits);
+			// +20 field: IDA stores as (float)(unsigned int)v33
+			// Send PointsRequired as plain uint32 - client converts to float internally
+			msg->WriteUInt32(tier ? (uint32_t)tier->pointsRequired : 0);
 		}
 		break;
 	}
@@ -7476,16 +7474,18 @@ void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype, const U
 	case 11:
 	{
 		// Case 11 from IDA: ReadUInt16(count), loop: ReadUInt32+ReadUInt32+ReadUInt32+ReadUInt8
-		// This is the bar threshold configuration - drives the Cash bar tier markers
+		// Populates global bar threshold list - drives the Cash bar tier markers
+		// Each 16-byte entry: {DWORD rankIndex, DWORD pointsRequired, DWORD nextPointsRequired, char flag}
 		int tierCount = g_pServerConfig ? (int)g_pServerConfig->vipTiers.size() : 0;
 		msg->WriteUInt16(tierCount);
 		for (int i = 0; i < tierCount; i++)
 		{
-			int pts = g_pServerConfig ? g_pServerConfig->vipTiers[i].pointsRequired : 0;
-			msg->WriteUInt32(i);    // rank index
-			msg->WriteUInt32(pts);  // points threshold
-			msg->WriteUInt32(0);    // unknown
-			msg->WriteUInt8(0);     // flag
+			int pts     = g_pServerConfig ? g_pServerConfig->vipTiers[i].pointsRequired : 0;
+			int nextPts = (g_pServerConfig && i + 1 < tierCount) ? g_pServerConfig->vipTiers[i + 1].pointsRequired : pts;
+			msg->WriteUInt32(i);        // Block[0] = rank index
+			msg->WriteUInt32(pts);      // Block[1] = points threshold
+			msg->WriteUInt32(nextPts);  // Block[2] = next tier threshold
+			msg->WriteUInt8(0);         // Block[3] = flag
 		}
 		break;
 	}
