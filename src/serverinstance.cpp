@@ -480,6 +480,12 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 		UserVip vip;
 		g_UserDatabase.GetVip(user->GetID(), vip);
 		g_PacketManager.SendVipSystem(s, subtype, vip);
+		// Always send rank privileges (8) and bar thresholds (11) alongside subtype 0
+		if (subtype == 0)
+		{
+			g_PacketManager.SendVipSystem(s, 8, vip);
+			g_PacketManager.SendVipSystem(s, 11, vip);
+		}
 		break;
 	}
 	case PacketId::ScenarioTX:
