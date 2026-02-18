@@ -3,6 +3,8 @@
 #include "channelmanager.h"
 #include "../serverconfig.h"
 
+#include <algorithm>
+
 #include "packet/packethelper_fulluserinfo.h"
 #include "packet/packet_metadata_data.h"
 #include "user/userfastbuy.h"
@@ -7409,17 +7411,31 @@ void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype, const U
 	case 0:
 		// Structure from IDA case 0:
 		// ReadUInt8  -> this+40 = currentRank
-		// ReadUInt32 -> this+48 = paymentsLast90Days
-		// ReadUInt32 -> this+52 = totalCashSpent (vipExp)
+		// ReadUInt32 -> this+48 = paymentsLast90Days (drives cash bar position)
+		// ReadUInt32 -> this+52 = totalCashSpent
 		// ReadUInt8  -> this+44 = nextRank
 		// ReadUInt8  -> this+56 = unknown flag
-		// ReadUInt8  -> count of duration entries (loop: type+uint32+uint32)
+		// ReadUInt8  -> count, loop: ReadUInt8(type<8) + ReadUInt32(val1) + ReadUInt32(val2)
+		//   -> these entries define the tier threshold markers on the cash bar
 		msg->WriteUInt8(currentRank);
-		msg->WriteUInt32(vip.vipExp);    // payments last 90 days = same as total for now
-		msg->WriteUInt32(vip.vipExp);    // total cash spent
+		msg->WriteUInt32(vip.vipExp);   // payments last 90 days - drives bar position
+		msg->WriteUInt32(vip.vipExp);   // total cash spent
 		msg->WriteUInt8(nextRank);
-		msg->WriteUInt8(0);              // unknown flag
-		msg->WriteUInt8(0);              // duration entry count = 0
+		msg->WriteUInt8(0);             // unknown flag
+		// Send tier thresholds as duration entries so bar markers appear correctly
+		{
+			int tierCount = g_pServerConfig ? (int)g_pServerConfig->vipTiers.size() : 0;
+			int entryCount = min(tierCount, 8);
+			msg->WriteUInt8(entryCount);
+			for (int i = 0; i < entryCount; i++)
+			{
+				int val1 = g_pServerConfig->vipTiers[i].pointsRequired;
+				int val2 = (i + 1 < entryCount) ? g_pServerConfig->vipTiers[i + 1].pointsRequired : val1;
+				msg->WriteUInt8(i);      // type = tier index
+				msg->WriteUInt32(val1);  // threshold start
+				msg->WriteUInt32(val2);  // threshold end
+			}
+		}
 		break;
 	case 8:
 	{

@@ -1,1 +1,2 @@
 CREATE TABLE IF NOT EXISTS "UserVip" ("userID" INT NOT NULL PRIMARY KEY, "vipLevel" INT DEFAULT 0, "vipExp" INT DEFAULT 0, "vipGrade" INT DEFAULT 0);
+PRAGMA user_version = 5;
