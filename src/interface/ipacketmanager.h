@@ -261,7 +261,7 @@ public:
 	virtual void SendUserStartStep(IExtendedSocket* socket) = 0;
 	virtual void SendClanTotalWar(IExtendedSocket* socket, int subtype) = 0;
 	virtual void SendExpedition(IExtendedSocket* socket, int subtype) = 0;
-	virtual void SendVipSystem(IExtendedSocket* socket, int subtype) = 0;
+	virtual void SendVipSystem(IExtendedSocket* socket, int subtype, const UserVip& vip = UserVip()) = 0;
 	virtual void SendScenarioTX(IExtendedSocket* socket, int subtype) = 0;
 	virtual void SendRibbonSystem(IExtendedSocket* socket, int subtype) = 0;
 	virtual void SendHonorShop(IExtendedSocket* socket, int subtype) = 0;
