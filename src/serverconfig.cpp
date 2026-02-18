@@ -958,7 +958,17 @@ const char* defaultServerConfig = R"(
 		"VoxelVxlURL": "http://d1u9da8nyooy18.cloudfront.net/resources_prod/%s.vxl",
 		"VoxelVmgURL": "https://d1u9da8nyooy18.cloudfront.net/images_prod/%s.vmg"
 	},
-	"DedicatedServerWhitelist": [ "127.0.0.1" ]
+	"DedicatedServerWhitelist": [ "127.0.0.1" ],
+	"VipTiers": [
+		{ "Name": "None",     "PointsRequired": 0      },
+		{ "Name": "Bronze",   "PointsRequired": 5000   },
+		{ "Name": "Silver",   "PointsRequired": 20000  },
+		{ "Name": "Gold",     "PointsRequired": 50000  },
+		{ "Name": "Platinum", "PointsRequired": 100000 },
+		{ "Name": "Diamond",  "PointsRequired": 200000 },
+		{ "Name": "Master",   "PointsRequired": 350000 },
+		{ "Name": "VVIP",     "PointsRequired": 500000 }
+	]
 }
 )";
 
@@ -1384,6 +1394,32 @@ bool CServerConfig::Load()
 				dedicatedServerWhitelist.push_back(ip);
 			}
 		}
+
+		if (cfg.contains("VipTiers"))
+		{
+			vipTiers.clear();
+			for (auto& jTier : cfg["VipTiers"])
+			{
+				VipTier tier;
+				tier.name = jTier.value("Name", "");
+				tier.pointsRequired = jTier.value("PointsRequired", 0);
+				vipTiers.push_back(tier);
+			}
+		}
+		else
+		{
+			// default 8 tiers: None + 7 paid tiers
+			vipTiers = {
+				{ "None",     0      },
+				{ "Bronze",   5000   },
+				{ "Silver",   20000  },
+				{ "Gold",     50000  },
+				{ "Platinum", 100000 },
+				{ "Diamond",  200000 },
+				{ "Master",   350000 },
+				{ "VVIP",     500000 }
+			};
+		}
 	}
 	catch (exception& ex)
 	{
@@ -1396,7 +1432,7 @@ bool CServerConfig::Load()
 
 void CServerConfig::LoadDefaultConfig(ordered_json& cfg)
 {
-	// или просто вьебать целый файл без ебли
+	// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 	cfg = ordered_json::parse(defaultServerConfig, nullptr, true, true);
 
 	//cfg = ordered_json();

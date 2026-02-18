@@ -48,6 +48,13 @@ public:
 	std::string voxelVxlURL;
 	std::string voxelVmgURL;
 	std::vector<std::string> dedicatedServerWhitelist;
+
+	struct VipTier
+	{
+		std::string name;
+		int pointsRequired;
+	};
+	std::vector<VipTier> vipTiers; // index = vipLevel (0=None, 1=Bronze, ..., 7=VVIP)
 };
 
 extern class CServerConfig* g_pServerConfig;

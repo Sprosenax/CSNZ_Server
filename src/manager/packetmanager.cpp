@@ -1,6 +1,7 @@
 #include "packetmanager.h"
 #include "serverinstance.h"
 #include "channelmanager.h"
+#include "../serverconfig.h"
 
 #include "packet/packethelper_fulluserinfo.h"
 #include "packet/packet_metadata_data.h"
@@ -7381,15 +7382,44 @@ void CPacketManager::SendExpedition(IExtendedSocket* socket, int subtype)
 
 void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype, const UserVip& vip)
 {
+	// Calculate vipLevel from vipExp using configured tiers
+	int level = 0;
+	if (g_pServerConfig && !g_pServerConfig->vipTiers.empty())
+	{
+		for (int i = (int)g_pServerConfig->vipTiers.size() - 1; i >= 0; i--)
+		{
+			if (vip.vipExp >= g_pServerConfig->vipTiers[i].pointsRequired)
+			{
+				level = i;
+				break;
+			}
+		}
+	}
+
+	// Calculate progress within current tier (as grade 0-100)
+	int grade = 0;
+	if (g_pServerConfig && level < (int)g_pServerConfig->vipTiers.size() - 1)
+	{
+		int curThreshold  = g_pServerConfig->vipTiers[level].pointsRequired;
+		int nextThreshold = g_pServerConfig->vipTiers[level + 1].pointsRequired;
+		int range = nextThreshold - curThreshold;
+		if (range > 0)
+			grade = (int)(((vip.vipExp - curThreshold) * 100) / range);
+	}
+	else if (level == (int)g_pServerConfig->vipTiers.size() - 1)
+	{
+		grade = 100; // max tier = full bar
+	}
+
 	CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
 	msg->BuildHeader();
 	msg->WriteUInt8(subtype);
 	switch (subtype)
 	{
 	case 0: // VIP tab opened - send level/exp/grade
-		msg->WriteUInt8(vip.vipLevel);
+		msg->WriteUInt8(level);
 		msg->WriteUInt32(vip.vipExp);
-		msg->WriteUInt8(vip.vipGrade);
+		msg->WriteUInt8(grade);
 		break;
 	case 9: // login time - send count=0 (empty list)
 		msg->WriteUInt8(0);
