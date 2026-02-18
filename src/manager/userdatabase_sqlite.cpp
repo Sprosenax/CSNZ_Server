@@ -6311,14 +6311,12 @@ int CUserDatabaseSQLite::UpdateVip(int userID, const UserVip& vip)
 {
 	try
 	{
-		SQLite::Transaction transaction(m_Database);
 		SQLite::Statement query(m_Database, OBFUSCATE("INSERT OR REPLACE INTO UserVip (userID, vipLevel, vipExp, vipGrade) VALUES (?, ?, ?, ?)"));
 		query.bind(1, userID);
 		query.bind(2, vip.vipLevel);
 		query.bind(3, vip.vipExp);
 		query.bind(4, vip.vipGrade);
 		query.exec();
-		transaction.commit();
 	}
 	catch (exception& e)
 	{
