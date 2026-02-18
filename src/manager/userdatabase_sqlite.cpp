@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define LAST_DB_VERSION 5
+#define LAST_DB_VERSION 6
 
 //#define OBFUSCATE(data) (string)AY_OBFUSCATE_KEY(data, 'F')
 #undef OBFUSCATE
@@ -6239,51 +6239,6 @@ int CUserDatabaseSQLite::UpdateHWIDBanList(const vector<unsigned char>& hwid, bo
 	}
 
 	return 1;
-}
-
-// Gets VIP data for user. Returns 0 on DB error, 1 on success (row may not exist = default values).
-int CUserDatabaseSQLite::GetVip(int userID, UserVip& vip)
-{
-    try
-    {
-        SQLite::Statement query(m_Database, OBFUSCATE("SELECT vipLevel, vipExp, vipGrade FROM UserVip WHERE userID = ? LIMIT 1"));
-        query.bind(1, userID);
-        if (query.executeStep())
-        {
-            vip.vipLevel = query.getColumn(0);
-            vip.vipExp   = query.getColumn(1);
-            vip.vipGrade = query.getColumn(2);
-        }
-        // if no row exists, vip stays at default (level 0, exp 0, grade 0)
-    }
-    catch (exception& e)
-    {
-        Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetVip: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-        return 0;
-    }
-    return 1;
-}
-
-// Updates VIP data for user. Creates the row if it doesn't exist.
-int CUserDatabaseSQLite::UpdateVip(int userID, const UserVip& vip)
-{
-    try
-    {
-        SQLite::Statement query(m_Database,
-            OBFUSCATE("INSERT INTO UserVip (userID, vipLevel, vipExp, vipGrade) VALUES (?, ?, ?, ?) "
-                      "ON CONFLICT(userID) DO UPDATE SET vipLevel=excluded.vipLevel, vipExp=excluded.vipExp, vipGrade=excluded.vipGrade"));
-        query.bind(1, userID);
-        query.bind(2, vip.vipLevel);
-        query.bind(3, vip.vipExp);
-        query.bind(4, vip.vipGrade);
-        query.exec();
-    }
-    catch (exception& e)
-    {
-        Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateVip: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
-        return 0;
-    }
-    return 1;
 }
 
 vector<vector<unsigned char>> CUserDatabaseSQLite::GetHWIDBanList()
