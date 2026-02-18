@@ -285,15 +285,12 @@ public:
 	void SendVoxelUnk47(IExtendedSocket* socket);
 	void SendVoxelUnk58(IExtendedSocket* socket);
 
-	// New client stub responses
 	void SendUserStartStep(IExtendedSocket* socket);
-	void SendRibbonSystem(IExtendedSocket* socket, int subtype);
 	void SendClanTotalWar(IExtendedSocket* socket, int subtype);
 	void SendExpedition(IExtendedSocket* socket, int subtype);
-	void SendVipSystemLogin(IExtendedSocket* socket, const UserVip& vip);
-	void SendVipSystemInfo(IExtendedSocket* socket, const UserVip& vip);
-	void SendVipSystemUnk6(IExtendedSocket* socket);
+	void SendVipSystem(IExtendedSocket* socket, int subtype, const UserVip& vip = UserVip());
 	void SendScenarioTX(IExtendedSocket* socket, int subtype);
+	void SendRibbonSystem(IExtendedSocket* socket, int subtype);
 	void SendHonorShop(IExtendedSocket* socket, int subtype);
 	void SendMileageShop(IExtendedSocket* socket, int subtype);
 	void SendQuestBadgeShop(IExtendedSocket* socket, int subtype);

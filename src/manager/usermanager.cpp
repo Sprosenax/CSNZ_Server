@@ -618,13 +618,6 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 	SendUserNotices(user);
 	Logger().Info("After SendUserNotices\n");
 
-		// VIP system — send login packet (subtype 9: reward list)
-	{
-		UserVip vip;
-		g_UserDatabase.GetVip(user->GetID(), vip);
-		g_PacketManager.SendVipSystemLogin(socket, vip);
-	}
-
 	g_PacketManager.SendShopUpdate(socket, g_ShopManager.GetProducts());
 	Logger().Info("After SendShopUpdate\n");
 	g_PacketManager.SendShopRecommendedProducts(socket, g_ShopManager.GetRecommendedProducts());
