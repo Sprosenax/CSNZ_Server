@@ -1732,10 +1732,6 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 			familyBattleClanID1 = 0;
 			familyBattleClanID2 = 0;
 		}
-		else
-		{
-			familyBattle = 1;
-		}
 	}
 	else
 	{
