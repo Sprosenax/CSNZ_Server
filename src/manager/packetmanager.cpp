@@ -2307,7 +2307,7 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 		highFlag = newSettings->highFlag;
 	}
 
-	msg->WriteUInt32(lowFlag);
+	msg->WriteUInt32(lowFlag & ~ROOM_LOW_CLANBATTLE);
 	msg->WriteUInt32(lowMidFlag);
 	msg->WriteUInt32(highMidFlag);
 	msg->WriteUInt32(highFlag);
