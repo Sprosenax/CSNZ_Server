@@ -7411,27 +7411,29 @@ void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype, const U
 	case 0:
 		// Structure from IDA case 0:
 		// ReadUInt8  -> this+40 = currentRank
-		// ReadUInt32 -> this+48 = paymentsLast90Days (drives cash bar position)
+		// ReadUInt32 -> this+48 = paymentsLast90Days (shows as "X Cash" text)
 		// ReadUInt32 -> this+52 = totalCashSpent
 		// ReadUInt8  -> this+44 = nextRank
 		// ReadUInt8  -> this+56 = unknown flag
 		// ReadUInt8  -> count, loop: ReadUInt8(type<8) + ReadUInt32(val1) + ReadUInt32(val2)
-		//   -> these entries define tier threshold segments on the cash bar
+		//   -> entries define tier segments on the cash bar
 		msg->WriteUInt8(currentRank);
-		msg->WriteUInt32(vip.vipExp);   // payments last 90 days - drives bar position
+		msg->WriteUInt32(vip.vipExp);   // payments last 90 days
 		msg->WriteUInt32(vip.vipExp);   // total cash spent
 		msg->WriteUInt8(nextRank);
 		msg->WriteUInt8(0);             // unknown flag
 		{
 			int tierCount = g_pServerConfig ? (int)g_pServerConfig->vipTiers.size() : 0;
-			// Send tier 1..N as segments (skip tier 0 = None/Regular, it has no range)
-			int entryCount = max(0, tierCount - 1);
+			// Send tiers 1..7 as bar segments (type must be 1-7, type 0 corrupts Duration display)
+			// Each entry: type = tier index (1-7), val1 = tier start threshold, val2 = tier end threshold
+			int entryCount = min(tierCount - 1, 7);
+			if (entryCount < 0) entryCount = 0;
 			msg->WriteUInt8(entryCount);
 			for (int i = 0; i < entryCount; i++)
 			{
 				int lo = g_pServerConfig->vipTiers[i].pointsRequired;
 				int hi = g_pServerConfig->vipTiers[i + 1].pointsRequired;
-				msg->WriteUInt8(i);         // type = tier index (must be < 8)
+				msg->WriteUInt8(i + 1);     // type = 1..7 (skip 0 to avoid Duration field corruption)
 				msg->WriteUInt32(lo);       // val1 = segment start
 				msg->WriteUInt32(hi);       // val2 = segment end
 			}
