@@ -7416,13 +7416,26 @@ void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype, const U
 		// ReadUInt8  -> this+44 = nextRank
 		// ReadUInt8  -> this+56 = unknown flag
 		// ReadUInt8  -> count, loop: ReadUInt8(type<8) + ReadUInt32(val1) + ReadUInt32(val2)
-		//   -> these entries define the tier threshold markers on the cash bar
+		//   -> these entries define tier threshold segments on the cash bar
 		msg->WriteUInt8(currentRank);
 		msg->WriteUInt32(vip.vipExp);   // payments last 90 days - drives bar position
 		msg->WriteUInt32(vip.vipExp);   // total cash spent
 		msg->WriteUInt8(nextRank);
 		msg->WriteUInt8(0);             // unknown flag
-		msg->WriteUInt8(0);             // duration entry count = 0 (duration entries drive Duration display, not cash bar)
+		{
+			int tierCount = g_pServerConfig ? (int)g_pServerConfig->vipTiers.size() : 0;
+			// Send tier 1..N as segments (skip tier 0 = None/Regular, it has no range)
+			int entryCount = max(0, tierCount - 1);
+			msg->WriteUInt8(entryCount);
+			for (int i = 0; i < entryCount; i++)
+			{
+				int lo = g_pServerConfig->vipTiers[i].pointsRequired;
+				int hi = g_pServerConfig->vipTiers[i + 1].pointsRequired;
+				msg->WriteUInt8(i);         // type = tier index (must be < 8)
+				msg->WriteUInt32(lo);       // val1 = segment start
+				msg->WriteUInt32(hi);       // val2 = segment end
+			}
+		}
 		break;
 	case 8:
 	{
@@ -7475,17 +7488,17 @@ void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype, const U
 	{
 		// Case 11 from IDA: ReadUInt16(count), loop: ReadUInt32+ReadUInt32+ReadUInt32+ReadUInt8
 		// Populates global bar threshold list - drives the Cash bar tier markers
-		// Each 16-byte entry: {DWORD rankIndex, DWORD pointsRequired, DWORD nextPointsRequired, char flag}
+		// Block[0]=threshold, Block[1]=threshold, Block[2]=nextThreshold, Block[3]=flag
 		int tierCount = g_pServerConfig ? (int)g_pServerConfig->vipTiers.size() : 0;
 		msg->WriteUInt16(tierCount);
 		for (int i = 0; i < tierCount; i++)
 		{
 			int pts     = g_pServerConfig ? g_pServerConfig->vipTiers[i].pointsRequired : 0;
 			int nextPts = (g_pServerConfig && i + 1 < tierCount) ? g_pServerConfig->vipTiers[i + 1].pointsRequired : pts;
-			msg->WriteUInt32(i);        // Block[0] = rank index
-			msg->WriteUInt32(pts);      // Block[1] = points threshold
-			msg->WriteUInt32(nextPts);  // Block[2] = next tier threshold
-			msg->WriteUInt8(0);         // Block[3] = flag
+			msg->WriteUInt32(pts);      // Block[0]
+			msg->WriteUInt32(pts);      // Block[1]
+			msg->WriteUInt32(nextPts);  // Block[2]
+			msg->WriteUInt8(i);         // Block[3] = rank index as flag
 		}
 		break;
 	}
