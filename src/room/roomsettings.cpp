@@ -1725,9 +1725,9 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 		highMidFlag |= ROOM_HIGHMID_PLAYERONETEAM;
 		playerOneTeam = (gameModeId == 3 || gameModeId == 5) ? 1 : 0;
 
+		highMidFlag |= ROOM_HIGHMID_FAMILYBATTLE;
 		if (!IsFamilyBattleAllowed(gameModeId))
 		{
-			highMidFlag |= ROOM_HIGHMID_FAMILYBATTLE;
 			familyBattle = 0;
 			familyBattleClanID1 = 0;
 			familyBattleClanID2 = 0;
