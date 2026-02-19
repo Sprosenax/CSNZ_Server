@@ -2322,6 +2322,7 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 		msg->WriteUInt8(newSettings->unk01);
 		msg->WriteUInt8(newSettings->unk02);
 		msg->WriteUInt8(newSettings->unk03);
+		msg->WriteUInt8(0); // extra byte added in newer client
 		msg->WriteUInt32(newSettings->unk04);
 	}
 	if (lowFlag & ROOM_LOW_PASSWORD) {
