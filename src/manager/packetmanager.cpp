@@ -2695,14 +2695,14 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	}
 }
 
-void CPacketManager::SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomInfo)
+void CPacketManager::SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomInfo, bool joining)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
 	msg->WriteUInt8(OutRoomType::CreateAndJoin);
 
-	msg->WriteUInt8(0);
+	msg->WriteUInt8(joining ? 1 : 0); // 0 = create (host), 1 = join (other players)
 	msg->WriteUInt32(roomInfo->GetID());
 	msg->WriteUInt32(roomInfo->GetHostUser()->GetID());
 	msg->WriteUInt16(0xB5);
@@ -2884,18 +2884,12 @@ void CPacketManager::SendRoomGameResult(IExtendedSocket* socket, IRoom* room, CG
 	msg->WriteUInt8(winTeam);
 	msg->WriteUInt8(0);
 	msg->WriteUInt8(0);
-	int validStatCount = 0;
-	for (auto stat : match->m_UserStats)
-		if (stat->m_pUser != NULL) validStatCount++;
-	msg->WriteUInt8(validStatCount);
+	msg->WriteUInt8(match->m_UserStats.size());
 	msg->WriteUInt8(room->GetSettings()->gameModeId);
 
 	for (auto stat : match->m_UserStats)
 	{
 		IUser* user = stat->m_pUser;
-
-		if (user == NULL)
-			continue;
 
 		//int totalExp = stat->m_nExpEarned + stat->m_nBonusExpEarned + uData->exp;
 

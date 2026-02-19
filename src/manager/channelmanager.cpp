@@ -1251,7 +1251,7 @@ bool CChannelManager::OnNewRoomRequest(CReceivePacket* msg, IUser* user)
 
 	user->SetCurrentRoom(newRoom);
 
-	newRoom->SendJoinNewRoom(user);
+	newRoom->SendJoinNewRoom(user, false); // creator: subtype 0
 
 	// hide user from channel users list
 	channel->UserLeft(user, true);
@@ -1377,7 +1377,7 @@ bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, IUser* user)
 
 	room->AddUser(user);
 	room->SetUserToTeam(user, roomTeam);
-	room->SendJoinNewRoom(user);
+	room->SendJoinNewRoom(user, true); // joiner: subtype 1
 
 	user->SetCurrentRoom(room);
 

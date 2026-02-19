@@ -236,9 +236,9 @@ void CRoom::SetStatus(RoomStatus newStatus)
 	m_pSettings->statusSymbol = newStatus == RoomStatus::STATUS_INGAME ? 3 : 0;
 }
 
-void CRoom::SendJoinNewRoom(IUser* user)
+void CRoom::SendJoinNewRoom(IUser* user, bool joining)
 {
-	g_PacketManager.SendRoomCreateAndJoin(user->GetExtendedSocket(), this);
+	g_PacketManager.SendRoomCreateAndJoin(user->GetExtendedSocket(), this, joining);
 }
 
 void CRoom::UpdateSettings(CRoomSettings& newSettings)
@@ -818,7 +818,7 @@ void CRoom::SendReadyStatusToAll(IUser* user)
 
 void CRoom::SendNewUser(IUser* user, IUser* newUser)
 {
-	g_PacketManager.SendRoomPlayerJoin(user->GetExtendedSocket(), newUser, (RoomTeamNum)newUser->GetRoomData()->m_Team);
+	g_PacketManager.SendRoomPlayerJoin(user->GetExtendedSocket(), newUser, RoomTeamNum::CounterTerrorist);
 }
 
 void CRoom::SendUserReadyStatus(IUser* user, IUser* player)
@@ -855,7 +855,7 @@ void CRoom::SendStartMatch(IUser* host)
 
 		if (m_pServer)
 		{
-			g_PacketManager.SendRoomCreateAndJoin(m_pServer->GetSocket(), this);
+			g_PacketManager.SendRoomCreateAndJoin(m_pServer->GetSocket(), this, true);
 			g_PacketManager.SendHostGameStart(m_pServer->GetSocket(), m_pServer->GetPort());
 		}
 		else
