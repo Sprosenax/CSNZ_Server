@@ -2708,9 +2708,6 @@ void CPacketManager::SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomI
 	msg->WriteUInt16(0xB5);
 	msg->WriteUInt8(0xFF);
 
-	CRoomSettings* roomSettings = roomInfo->GetSettings();
-	WriteSettings(msg, roomInfo->GetSettings(), roomSettings->lowFlag, roomSettings->lowMidFlag, roomSettings->highMidFlag, roomSettings->highFlag);
-
 	msg->WriteUInt8(roomInfo->GetUsers().size());
 	for (auto user : roomInfo->GetUsers())
 	{
@@ -2737,6 +2734,9 @@ void CPacketManager::SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomI
 		CPacketHelper_FullUserInfo fullUserInfo;
 		fullUserInfo.Build(msg->m_OutStream, user->GetID(), character);
 	}
+
+	CRoomSettings* roomSettings = roomInfo->GetSettings();
+	WriteSettings(msg, roomInfo->GetSettings(), roomSettings->lowFlag, roomSettings->lowMidFlag, roomSettings->highMidFlag, roomSettings->highFlag);
 
 	socket->Send(msg);
 }
