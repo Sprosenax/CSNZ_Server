@@ -269,12 +269,6 @@ void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserChara
 			buf.writeUInt16_LE(0);
 	}
 
-	if (character.lowFlag & UFLAG_LOW_UNK23)
-	{
-		buf.writeUInt8(0);
-		buf.writeUInt8(0);
-	}
-
 	if (character.lowFlag & UFLAG_LOW_UNK30)
 	{
 		buf.writeUInt32_LE(0);

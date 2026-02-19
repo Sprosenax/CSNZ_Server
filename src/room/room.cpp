@@ -818,7 +818,7 @@ void CRoom::SendReadyStatusToAll(IUser* user)
 
 void CRoom::SendNewUser(IUser* user, IUser* newUser)
 {
-	g_PacketManager.SendRoomPlayerJoin(user->GetExtendedSocket(), newUser, RoomTeamNum::CounterTerrorist);
+	g_PacketManager.SendRoomPlayerJoin(user->GetExtendedSocket(), newUser, (RoomTeamNum)newUser->GetRoomData()->m_Team);
 }
 
 void CRoom::SendUserReadyStatus(IUser* user, IUser* player)

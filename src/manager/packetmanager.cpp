@@ -2884,12 +2884,18 @@ void CPacketManager::SendRoomGameResult(IExtendedSocket* socket, IRoom* room, CG
 	msg->WriteUInt8(winTeam);
 	msg->WriteUInt8(0);
 	msg->WriteUInt8(0);
-	msg->WriteUInt8(match->m_UserStats.size());
+	int validStatCount = 0;
+	for (auto stat : match->m_UserStats)
+		if (stat->m_pUser != NULL) validStatCount++;
+	msg->WriteUInt8(validStatCount);
 	msg->WriteUInt8(room->GetSettings()->gameModeId);
 
 	for (auto stat : match->m_UserStats)
 	{
 		IUser* user = stat->m_pUser;
+
+		if (user == NULL)
+			continue;
 
 		//int totalExp = stat->m_nExpEarned + stat->m_nBonusExpEarned + uData->exp;
 
