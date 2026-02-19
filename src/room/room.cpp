@@ -855,7 +855,7 @@ void CRoom::SendStartMatch(IUser* host)
 
 		if (m_pServer)
 		{
-			g_PacketManager.SendRoomCreateAndJoin(m_pServer->GetSocket(), this, true);
+			g_PacketManager.SendRoomCreateAndJoin(m_pServer->GetSocket(), this);
 			g_PacketManager.SendHostGameStart(m_pServer->GetSocket(), m_pServer->GetPort());
 		}
 		else
