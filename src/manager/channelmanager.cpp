@@ -1377,7 +1377,7 @@ bool CChannelManager::OnJoinRoomRequest(CReceivePacket* msg, IUser* user)
 
 	room->AddUser(user);
 	room->SetUserToTeam(user, roomTeam);
-	room->SendJoinNewRoom(user, true);
+	room->SendJoinNewRoom(user);
 
 	user->SetCurrentRoom(room);
 

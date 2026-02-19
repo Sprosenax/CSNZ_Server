@@ -2700,8 +2700,9 @@ void CPacketManager::SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomI
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
 
-	msg->WriteUInt8(joining ? OutRoomType::PlayerJoin : OutRoomType::CreateAndJoin);
+	msg->WriteUInt8(OutRoomType::CreateAndJoin);
 
+	msg->WriteUInt8(0);
 	msg->WriteUInt32(roomInfo->GetID());
 	msg->WriteUInt32(roomInfo->GetHostUser()->GetID());
 	msg->WriteUInt16(0xB5);
