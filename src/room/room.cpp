@@ -236,9 +236,9 @@ void CRoom::SetStatus(RoomStatus newStatus)
 	m_pSettings->statusSymbol = newStatus == RoomStatus::STATUS_INGAME ? 3 : 0;
 }
 
-void CRoom::SendJoinNewRoom(IUser* user, bool joining)
+void CRoom::SendJoinNewRoom(IUser* user)
 {
-	g_PacketManager.SendRoomCreateAndJoin(user->GetExtendedSocket(), this, joining);
+	g_PacketManager.SendRoomCreateAndJoin(user->GetExtendedSocket(), this);
 }
 
 void CRoom::UpdateSettings(CRoomSettings& newSettings)
