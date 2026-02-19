@@ -361,6 +361,8 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 	}
 	if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE) {
 		familyBattle = inPacket.readUInt8();
+		if (!IsFamilyBattleAllowed(gameModeId))
+			familyBattle = 0;
 	}
 	if (highMidFlag & ROOM_HIGHMID_WEAPONBUYCOOLTIME) {
 		weaponBuyCoolTime = inPacket.readUInt8();
