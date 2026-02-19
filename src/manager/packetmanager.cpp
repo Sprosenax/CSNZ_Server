@@ -2690,10 +2690,6 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	}
 	if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE) {
 		msg->WriteUInt8(newSettings->familyBattle);
-		msg->WriteUInt8(0); // familyBattleClanID loop x4 (new client)
-		msg->WriteUInt8(0);
-		msg->WriteUInt8(0);
-		msg->WriteUInt8(0);
 	}
 	if (highMidFlag & ROOM_HIGHMID_WEAPONBUYCOOLTIME) {
 		msg->WriteUInt8(newSettings->weaponBuyCoolTime);
