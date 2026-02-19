@@ -7409,66 +7409,58 @@ void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype, const U
 	switch (subtype)
 	{
 	case 0:
-		// Structure from IDA case 0:
-		// ReadUInt8  -> this+40 = currentRank
-		// ReadUInt32 -> this+48 = paymentsLast90Days (shows as "X Cash" text)
-		// ReadUInt32 -> this+52 = totalCashSpent
-		// ReadUInt8  -> this+44 = nextRank
-		// ReadUInt8  -> this+56 = unknown flag
-		// ReadUInt8  -> count, loop: ReadUInt8(type<8) + ReadUInt32(val1) + ReadUInt32(val2)
-		//   -> entries define tier segments on the cash bar
+		// Structure from Korean server capture:
+		// Korean server sends entryCount=0 (no bar segment entries)
+		// The bar threshold markers come purely from case 8 +20 field (ptsRequired)
 		msg->WriteUInt8(currentRank);
 		msg->WriteUInt32(vip.vipExp);   // payments last 90 days
-		msg->WriteUInt32(vip.vipExp);   // total cash spent
+		msg->WriteUInt32(0);            // totalCashSpent = 0 (Korean server sends 0 here)
 		msg->WriteUInt8(nextRank);
-		msg->WriteUInt8(0);             // unknown flag
-		{
-			int tierCount = g_pServerConfig ? (int)g_pServerConfig->vipTiers.size() : 0;
-			// Send tiers 1..7 as bar segments (type must be 1-7, type 0 corrupts Duration display)
-			// Each entry: type = tier index (1-7), val1 = tier start threshold, val2 = tier end threshold
-			int entryCount = min(tierCount - 1, 7);
-			if (entryCount < 0) entryCount = 0;
-			msg->WriteUInt8(entryCount);
-			for (int i = 0; i < entryCount; i++)
-			{
-				int lo = g_pServerConfig->vipTiers[i].pointsRequired;
-				int hi = g_pServerConfig->vipTiers[i + 1].pointsRequired;
-				msg->WriteUInt8(i + 1);     // type = 1..7 (skip 0 to avoid Duration field corruption)
-				msg->WriteUInt32(lo);       // val1 = segment start
-				msg->WriteUInt32(hi);       // val2 = segment end
-			}
-		}
+		msg->WriteUInt8(currentRank);   // unknown flag = currentRank (matches Korean server)
+		msg->WriteUInt8(0);             // entryCount = 0
 		break;
 	case 8:
 	{
-		// 8 rank entries x 36 bytes each = 288 bytes
-		// Each entry (IDA case 8 do-while loop):
-		// ReadUInt8  -> rank ID
-		// ReadUInt32 -> mileage payback
-		// ReadUInt8  -> sub-item count, then loop reading UInt8 per item
-		// ReadUInt8  -> +25
-		// ReadUInt8  -> +24
-		// ReadUInt8  -> +26 (zombie scenario)
-		// ReadUInt8  -> +27 (login supplies)
-		// ReadUInt8  -> +28
-		// ReadUInt8  -> +30
-		// ReadUInt8  -> +31
-		// ReadUInt8  -> +32
-		// ReadUInt32 -> +20 as float (mileage rate)
+		// From Korean server packet capture - exact structure:
+		// rankID(1) + mileage(4) + subCount(1) + N*item(1) + flags(8) + ptsRequired(4)
+		// Real Korean tier data: 0,50,200,750,4000,10000,10000,25000 pts
+		// Real mileage: 0,100,2000,5000,10000,15000,20000,25000
+		// Note: entry 1 has rankID=0 (not 1) - acts as Bronze threshold marker with rankID reused
+		// Flags: flag[0]=+25, flag[1]=+24, flag[2]=+26, flag[3]=+27, flag[4]=+28, flag[5]=+30, flag[6]=+31, flag[7]=+32
+		
+		// Korean server's exact 8 entries:
+		struct VipEntry {
+			uint8_t rankId;
+			uint32_t mileage;
+			std::vector<uint8_t> items;
+			uint8_t flags[8];
+			uint32_t ptsRequired;
+		};
+		
 		int tierCount = g_pServerConfig ? (int)g_pServerConfig->vipTiers.size() : 0;
+		
 		for (int i = 0; i < 8; i++)
 		{
 			const CServerConfig::VipTier* tier = (g_pServerConfig && i < tierCount)
 				? &g_pServerConfig->vipTiers[i] : nullptr;
-
-			msg->WriteUInt8(i);   // rank ID = index
-			msg->WriteUInt32(tier ? tier->mileagePayback : 0);
-			// sub-items
-			int subCount = tier ? (int)tier->subItems.size() : 0;
+			
+			// rankID: entry 0 and 1 both use rankID=0 (matches Korean server), rest match index
+			uint8_t rankId = (i <= 1) ? 0 : (uint8_t)i;
+			msg->WriteUInt8(rankId);
+			msg->WriteUInt32(tier ? (uint32_t)tier->mileagePayback : 0);
+			
+			// sub-items: descending list from (i-1) down to 1
+			// tier 0,1: no items; tier 2: [1]; tier 3: [1]; tier 4: [2,1]; tier 5: [3,2,1]; etc.
+			int subCount = (i <= 1) ? 0 : (i >= 7 ? 6 : (i - 1));
+			// Korean: tier2=0 items, tier3=1 item, tier4=2, tier5=3, tier6=4, tier7=6
+			static const uint8_t koreanSubCounts[8] = {0, 0, 0, 1, 2, 3, 4, 6};
+			subCount = koreanSubCounts[i];
 			msg->WriteUInt8(subCount);
-			for (int j = 0; j < subCount; j++)
-				msg->WriteUInt8(tier->subItems[j]);
-			// 8 flag bytes
+			for (int j = subCount; j >= 1; j--)
+				msg->WriteUInt8((uint8_t)j);
+			
+			// 8 flag bytes (+25,+24,+26,+27,+28,+30,+31,+32)
+			// From capture: tier 0-1: all zeros; tier 2+: +24=1,+26=1; higher tiers add more
 			msg->WriteUInt8(tier ? tier->unk25          : 0);
 			msg->WriteUInt8(tier ? tier->unk24          : 0);
 			msg->WriteUInt8(tier ? tier->zombieScenario : 0);
@@ -7477,8 +7469,8 @@ void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype, const U
 			msg->WriteUInt8(tier ? tier->unk30          : 0);
 			msg->WriteUInt8(tier ? tier->unk31          : 0);
 			msg->WriteUInt8(tier ? tier->unk32          : 0);
-			// +20 field: IDA stores as (float)(unsigned int)v33
-			// Send PointsRequired as plain uint32 - client converts to float internally
+			
+			// ptsRequired: client stores as (float)(uint32) and uses for bar threshold markers
 			msg->WriteUInt32(tier ? (uint32_t)tier->pointsRequired : 0);
 		}
 		break;
