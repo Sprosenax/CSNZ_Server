@@ -830,6 +830,7 @@ enum RoomStatus
 #define	UFLAG_LOW_UNK21				(1<<21)
 #define UFLAG_LOW_TITLES			(1<<22)
 #define	UFLAG_LOW_UNK23				(1<<23)
+#define	UFLAG_LOW_UNK24				(1<<24)
 #define	UFLAG_LOW_UNK25				(1<<25)
 #define	UFLAG_LOW_UNK26				(1<<26)
 #define	UFLAG_LOW_UNK27				(1<<27)
