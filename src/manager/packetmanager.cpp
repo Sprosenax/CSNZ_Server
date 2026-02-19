@@ -2317,6 +2317,9 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	}
 	if (lowFlag & ROOM_LOW_UNK) {
 		msg->WriteUInt8(newSettings->unk00);
+		msg->WriteUInt8(0); // extra byte added in new client
+		msg->WriteUInt8(0); // extra byte added in new client
+		msg->WriteUInt32(0); // extra uint32 added in new client
 	}
 	if (lowFlag & ROOM_LOW_CLANBATTLE) {
 		msg->WriteUInt8(newSettings->unk01);
