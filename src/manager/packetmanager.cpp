@@ -2604,6 +2604,19 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 			msg->WriteUInt8(newSettings->voxel_unk23);
 		}
 	}
+	// NEW flags in new client (bit 19 area) - between VOXEL and UNK63
+	// LABEL_290: uint32, if nonzero reads more data
+	if (lowMidFlag & ROOM_LOWMID_UNK_NEW1) {
+		msg->WriteUInt32(0);
+	}
+	// LABEL_299: uint8 count + loop of uint16s
+	if (lowMidFlag & ROOM_LOWMID_UNK_NEW2) {
+		msg->WriteUInt8(0); // count = 0, no entries
+	}
+	// LABEL_304: uint8 bool
+	if (lowMidFlag & ROOM_LOWMID_UNK_NEW3) {
+		msg->WriteUInt8(0);
+	}
 	if (lowMidFlag & ROOM_LOWMID_UNK63) {
 		msg->WriteUInt8(newSettings->unk63);
 		for (size_t i = 0; i < newSettings->unk63; i++)

@@ -1460,17 +1460,21 @@ enum UserSurveyAnswerResult
 #define ROOM_LOWMID_MAPID2				(1<<16)
 #define ROOM_LOWMID_ZBLIMIT				(1<<17)
 #define ROOM_LOWMID_VOXEL				(1<<18)
-#define ROOM_LOWMID_UNK63				(1<<20)
-#define ROOM_LOWMID_UNK64				(1<<21)
-#define ROOM_LOWMID_TEAMSWITCH			(1<<22)
-#define ROOM_LOWMID_ZBRESPAWN			(1<<23)
-#define ROOM_LOWMID_ZBBALANCE			(1<<24)
-#define ROOM_LOWMID_GAMERULE			(1<<25)
-#define ROOM_LOWMID_SUPERROOM			(1<<26)
-#define ROOM_LOWMID_ISZBCOMPETITIVE		(1<<27)
-#define ROOM_LOWMID_ZBAUTOHUNTING		(1<<28)
-#define ROOM_LOWMID_INTEGRATEDTEAM		(1<<29)
-#define ROOM_LOWMID_UNK73				(1<<30)
+#define ROOM_LOWMID_UNK_NEW1			(1<<19)  // new in newer client: uint32 field
+#define ROOM_LOWMID_UNK_NEW2			(1<<20)  // new in newer client: uint8 count + uint16 loop
+#define ROOM_LOWMID_UNK_NEW3			(1<<21)  // new in newer client: uint8 bool
+#define ROOM_LOWMID_UNK63				(1<<22)
+#define ROOM_LOWMID_UNK64				(1<<23)
+#define ROOM_LOWMID_TEAMSWITCH			(1<<24)
+#define ROOM_LOWMID_ZBRESPAWN			(1<<25)
+#define ROOM_LOWMID_ZBBALANCE			(1<<26)
+#define ROOM_LOWMID_GAMERULE			(1<<27)
+#define ROOM_LOWMID_SUPERROOM			(1<<28)
+#define ROOM_LOWMID_ISZBCOMPETITIVE		(1<<29)
+#define ROOM_LOWMID_ZBAUTOHUNTING		(1<<30)
+#define ROOM_LOWMID_INTEGRATEDTEAM		(1<<31)
+// UNK73 was bit30 in old client but overflows with 3 new bits inserted - aliased to 0 (effectively disabled)
+#define ROOM_LOWMID_UNK73				0
 #define ROOM_LOWMID_ALL					(-1)
 
 // ROOM HIGH-MID FLAGS
