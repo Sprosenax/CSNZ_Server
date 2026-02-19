@@ -2307,7 +2307,7 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 		highFlag = newSettings->highFlag;
 	}
 
-	msg->WriteUInt32(lowFlag & ~ROOM_LOW_CLANBATTLE);
+	msg->WriteUInt32(lowFlag);
 	msg->WriteUInt32(lowMidFlag);
 	msg->WriteUInt32(highMidFlag);
 	msg->WriteUInt32(highFlag);
@@ -2686,6 +2686,11 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	}
 	if (highMidFlag & ROOM_HIGHMID_WEAPONRESTRICT) {
 		msg->WriteUInt8(newSettings->weaponRestrict);
+		// new client reads 4 more bytes in a loop after weaponRestrict
+		msg->WriteUInt8(0);
+		msg->WriteUInt8(0);
+		msg->WriteUInt8(0);
+		msg->WriteUInt8(0);
 	}
 	if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE) {
 		msg->WriteUInt8(newSettings->familyBattle);
