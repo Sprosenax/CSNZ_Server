@@ -3406,8 +3406,6 @@ void CPacketManager::SendHostUserInventory(IExtendedSocket* socket, int userId, 
 		msg->WriteUInt16(item.m_nPaintID);
 		msg->WriteUInt16(item.m_nEnhancementLevel);
 		msg->WriteUInt32(item.m_nEnhanceValue);
-		msg->WriteUInt32(0); // unk +24
-		msg->WriteUInt32(0); // unk +28
 		msg->WriteUInt8(item.GetPartCount());
 
 		if (item.m_nPartSlot1)
