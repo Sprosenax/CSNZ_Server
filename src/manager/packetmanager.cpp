@@ -2605,15 +2605,16 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 		}
 	}
 	// bit19 (ROOM_LOWMID_UNK_NEW1): IDA LABEL_299 reads u8 count + loop of u16s.
-	// With count=0, client reads exactly 1 byte. Write u8(0) = count of 0, no entries.
+	// count=0 means client reads exactly 1 byte. Writing uint32 here caused 3-byte shift
+	// corrupting everything after bit19, including highMidFlag field data (familyBattle reads garbage -> looks like clanwar is ON).
 	if (lowMidFlag & ROOM_LOWMID_UNK_NEW1) {
 		msg->WriteUInt8(0); // count = 0, no u16 entries follow
 	}
-	// bit20 (ROOM_LOWMID_UNK_NEW2): IDA LABEL_304 reads u8 bool
+	// bit20 (ROOM_LOWMID_UNK_NEW2): IDA LABEL_304, reads u8
 	if (lowMidFlag & ROOM_LOWMID_UNK_NEW2) {
 		msg->WriteUInt8(0); // count = 0, no entries
 	}
-	// bit21 (ROOM_LOWMID_UNK_NEW3): IDA LABEL_309 reads u8
+	// LABEL_304: uint8 bool
 	if (lowMidFlag & ROOM_LOWMID_UNK_NEW3) {
 		msg->WriteUInt8(0);
 	}
@@ -2702,8 +2703,7 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 		msg->WriteString(newSettings->unk79_3);
 		msg->WriteUInt32(newSettings->unk79_4);
 	}
-	// highMidFlag bits 10-13: new in this client version (xmmwords 2D15048-2D15078).
-	// Read size unknown from IDA; assume uint8 each until confirmed otherwise.
+	// highMid bits 10-13: new in this client (xmmwords 2D15048-2D15078)
 	if (highMidFlag & ROOM_HIGHMID_UNK_HM10) {
 		msg->WriteUInt8(0);
 	}
@@ -2714,6 +2714,7 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 		msg->WriteUInt8(0);
 	}
 	if (highMidFlag & ROOM_HIGHMID_UNK_HM13) {
+		msg->WriteUInt8(0); // two bytes for this one
 		msg->WriteUInt8(0);
 	}
 

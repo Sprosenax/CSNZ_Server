@@ -1488,6 +1488,10 @@ enum UserSurveyAnswerResult
 #define ROOM_HIGHMID_WEAPONBUYCOOLTIME	(1<<7)
 #define ROOM_HIGHMID_ZBREBALANCE		(1<<8)
 #define ROOM_HIGHMID_UNK79				(1<<9)
+#define ROOM_HIGHMID_UNK_HM10			(1<<10) // new client (xmmword_2D15048): reads u8
+#define ROOM_HIGHMID_UNK_HM11			(1<<11) // new client (xmmword_2D15058): reads u8
+#define ROOM_HIGHMID_UNK_HM12			(1<<12) // new client (xmmword_2D15068): reads u8
+#define ROOM_HIGHMID_UNK_HM13			(1<<13) // new client (xmmword_2D15078): reads u8+u8
 #define ROOM_HIGHMID_ALL				(-1)
 
 // ROOM HIGH FLAGS
