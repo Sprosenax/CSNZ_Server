@@ -361,8 +361,6 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 	}
 	if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE) {
 		familyBattle = inPacket.readUInt8();
-		if (!IsFamilyBattleAllowed(gameModeId))
-			familyBattle = 0;
 	}
 	if (highMidFlag & ROOM_HIGHMID_WEAPONBUYCOOLTIME) {
 		weaponBuyCoolTime = inPacket.readUInt8();
@@ -1725,9 +1723,9 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 		highMidFlag |= ROOM_HIGHMID_PLAYERONETEAM;
 		playerOneTeam = (gameModeId == 3 || gameModeId == 5) ? 1 : 0;
 
-		highMidFlag |= ROOM_HIGHMID_FAMILYBATTLE;
 		if (!IsFamilyBattleAllowed(gameModeId))
 		{
+			highMidFlag |= ROOM_HIGHMID_FAMILYBATTLE;
 			familyBattle = 0;
 			familyBattleClanID1 = 0;
 			familyBattleClanID2 = 0;
@@ -2153,7 +2151,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 		if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE)
 		{
 			if (familyBattle)
-				familyBattle = 0; // disable until fully supported
+				LoadFamilyBattleSettings(gameModeId);
 			else
 			{
 				familyBattleClanID1 = 0;
@@ -2572,7 +2570,7 @@ bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 		}
 
 		if (IsFamilyBattleAllowed(gameModeId) && roomSettings->familyBattle)
-			roomSettings->familyBattle = 0; // disable until fully supported
+			LoadFamilyBattleSettings(gameModeId);
 	}
 	else
 	{
