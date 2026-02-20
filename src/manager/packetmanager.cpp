@@ -2494,7 +2494,7 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 		msg->WriteUInt8(newSettings->enhanceRestrict);
 	}
 	if (lowMidFlag & ROOM_LOWMID_SD) {
-		msg->WriteUInt8(newSettings->sd);
+		msg->WriteUInt16(newSettings->sd); // new client reads uint16 (was uint8 in old client)
 	}
 	if (lowMidFlag & ROOM_LOWMID_ZSDIFFICULTY) {
 		msg->WriteUInt8(newSettings->zsDifficulty);
@@ -2604,11 +2604,8 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 			msg->WriteUInt8(newSettings->voxel_unk23);
 		}
 	}
-	// bit19 (ROOM_LOWMID_UNK_NEW1): no xmmword in new client, but writing uint32(0)
-	// compensates for a 4-byte gap elsewhere. Removing this breaks playerCount alignment.
-	if (lowMidFlag & ROOM_LOWMID_UNK_NEW1) {
-		msg->WriteUInt32(0);
-	}
+	// bit19 (ROOM_LOWMID_UNK_NEW1): no xmmword handler in new client (sub_25B92C0).
+	// Write nothing - the +1 byte from SD (uint8→uint16) covers the alignment correctly.
 	// LABEL_299: uint8 count + loop of uint16s (bit20)
 	if (lowMidFlag & ROOM_LOWMID_UNK_NEW2) {
 		msg->WriteUInt8(0); // count = 0, no entries
