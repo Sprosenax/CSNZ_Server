@@ -2323,7 +2323,6 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 		msg->WriteUInt8(newSettings->unk02);
 		msg->WriteUInt8(newSettings->unk03);
 		msg->WriteUInt32(newSettings->unk04);
-		msg->WriteUInt8(0); // new client requires 8 bytes total for CLANBATTLE
 	}
 	if (lowFlag & ROOM_LOW_PASSWORD) {
 		msg->WriteString(newSettings->password);
@@ -2605,15 +2604,17 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 			msg->WriteUInt8(newSettings->voxel_unk23);
 		}
 	}
-	// LABEL_290: bit19 has no handler but 4 bytes needed for alignment
+	// bit19 (ROOM_LOWMID_UNK_NEW1): IDA LABEL_299 reads u8 count + loop of u16s.
+	// count=0 means client reads exactly 1 byte. Writing uint32 here caused 3-byte shift
+	// corrupting everything after bit19, including highMidFlag field data (familyBattle reads garbage -> looks like clanwar is ON).
 	if (lowMidFlag & ROOM_LOWMID_UNK_NEW1) {
-		msg->WriteUInt32(0);
+		msg->WriteUInt8(0); // count = 0, no u16 entries follow
 	}
-	// LABEL_299: uint8 count + loop of uint16s (bit20)
+	// bit20 (ROOM_LOWMID_UNK_NEW2): IDA LABEL_304, reads u8
 	if (lowMidFlag & ROOM_LOWMID_UNK_NEW2) {
 		msg->WriteUInt8(0); // count = 0, no entries
 	}
-	// LABEL_304: uint8 bool (bit21)
+	// LABEL_304: uint8 bool
 	if (lowMidFlag & ROOM_LOWMID_UNK_NEW3) {
 		msg->WriteUInt8(0);
 	}
@@ -2645,12 +2646,10 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	if (lowMidFlag & ROOM_LOWMID_ISZBCOMPETITIVE) {
 		msg->WriteUInt8(newSettings->isZbCompetitive);
 	}
-	if (lowMidFlag & ROOM_LOWMID_ZBAUTOHUNTING) {
-		msg->WriteUInt8(newSettings->zbAutoHunting);
-	}
-	if (lowMidFlag & ROOM_LOWMID_INTEGRATEDTEAM) {
-		msg->WriteUInt8(newSettings->integratedTeam);
-	}
+	// lowMid bits 30 (ZBAUTOHUNTING) and 31 (INTEGRATEDTEAM) have no handlers in the
+	// new client (sub_25B92C0). Client skips them; writing bytes here shifts the player list.
+	// if (lowMidFlag & ROOM_LOWMID_ZBAUTOHUNTING) { msg->WriteUInt8(newSettings->zbAutoHunting); }
+	// if (lowMidFlag & ROOM_LOWMID_INTEGRATEDTEAM) { msg->WriteUInt8(newSettings->integratedTeam); }
 	if (lowMidFlag & ROOM_LOWMID_UNK73) {
 		msg->WriteUInt8(newSettings->unk73);
 	}
@@ -2701,6 +2700,20 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 		msg->WriteString(newSettings->unk79_2);
 		msg->WriteString(newSettings->unk79_3);
 		msg->WriteUInt32(newSettings->unk79_4);
+	}
+	// highMid bits 10-13: new in this client (xmmwords 2D15048-2D15078)
+	if (highMidFlag & ROOM_HIGHMID_UNK_HM10) {
+		msg->WriteUInt8(0);
+	}
+	if (highMidFlag & ROOM_HIGHMID_UNK_HM11) {
+		msg->WriteUInt8(0);
+	}
+	if (highMidFlag & ROOM_HIGHMID_UNK_HM12) {
+		msg->WriteUInt8(0);
+	}
+	if (highMidFlag & ROOM_HIGHMID_UNK_HM13) {
+		msg->WriteUInt8(0); // two bytes for this one
+		msg->WriteUInt8(0);
 	}
 
 	if (highFlag & ROOM_HIGH_UNK77) {
@@ -3393,8 +3406,8 @@ void CPacketManager::SendHostUserInventory(IExtendedSocket* socket, int userId, 
 		msg->WriteUInt16(item.m_nPaintID);
 		msg->WriteUInt16(item.m_nEnhancementLevel);
 		msg->WriteUInt32(item.m_nEnhanceValue);
-		msg->WriteUInt32(0); // new: unk +24
-		msg->WriteUInt32(0); // new: unk +28
+		msg->WriteUInt32(0); // unk +24
+		msg->WriteUInt32(0); // unk +28
 		msg->WriteUInt8(item.GetPartCount());
 
 		if (item.m_nPartSlot1)
@@ -3407,7 +3420,7 @@ void CPacketManager::SendHostUserInventory(IExtendedSocket* socket, int userId, 
 			msg->WriteUInt8(1);
 			msg->WriteUInt16(item.m_nPartSlot2);
 		}
-		msg->WriteUInt32(0); // new: unk +36
+		msg->WriteUInt32(0); // unk +36
 	}
 
 	socket->Send(msg);
