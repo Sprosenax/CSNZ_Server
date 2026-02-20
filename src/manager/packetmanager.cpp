@@ -2323,7 +2323,6 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 		msg->WriteUInt8(newSettings->unk02);
 		msg->WriteUInt8(newSettings->unk03);
 		msg->WriteUInt32(newSettings->unk04);
-		msg->WriteUInt8(0); // new client requires 8 bytes total for CLANBATTLE
 	}
 	if (lowFlag & ROOM_LOW_PASSWORD) {
 		msg->WriteString(newSettings->password);
@@ -2605,7 +2604,11 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 			msg->WriteUInt8(newSettings->voxel_unk23);
 		}
 	}
-	// bit19 (ROOM_LOWMID_UNK_NEW1) has NO handler in new client - write nothing
+	// bit19 (ROOM_LOWMID_UNK_NEW1): no xmmword in new client, but writing uint32(0)
+	// compensates for a 4-byte gap elsewhere. Removing this breaks playerCount alignment.
+	if (lowMidFlag & ROOM_LOWMID_UNK_NEW1) {
+		msg->WriteUInt32(0);
+	}
 	// LABEL_299: uint8 count + loop of uint16s (bit20)
 	if (lowMidFlag & ROOM_LOWMID_UNK_NEW2) {
 		msg->WriteUInt8(0); // count = 0, no entries
