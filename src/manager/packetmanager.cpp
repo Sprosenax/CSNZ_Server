@@ -2295,7 +2295,7 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	if (low || lowMid || highMid || high)
 	{
 		lowFlag = low;
-		lowMidFlag = lowMid;
+		lowMidFlag = lowMid & ~ROOM_LOWMID_INTEGRATEDTEAM; // lowMid bit31 has no handler in new client
 		highMidFlag = highMid;
 		highFlag = high;
 	}
