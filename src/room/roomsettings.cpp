@@ -1306,9 +1306,7 @@ void CRoomSettings::LoadDefaultSettings(int gameModeId, int mapId)
 		roundTime = 3;
 	}
 
-	if (familyBattle)
-		LoadFamilyBattleSettings(gameModeId);
-
+	familyBattle = 0; // disable until fully supported - LoadFamilyBattleSettings breaks packet byte count
 	weaponBuyCoolTime = 0;
 	zbRebalance = gameModeId == 14 ? 1 : 0;
 	unk79_1 = 0;
@@ -2151,7 +2149,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 		if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE)
 		{
 			if (familyBattle)
-				LoadFamilyBattleSettings(gameModeId);
+				familyBattle = 0; // disable until fully supported
 			else
 			{
 				familyBattleClanID1 = 0;
@@ -2570,7 +2568,7 @@ bool CRoomSettings::CheckNewSettings(IUser* user, CRoomSettings* roomSettings)
 		}
 
 		if (IsFamilyBattleAllowed(gameModeId) && roomSettings->familyBattle)
-			LoadFamilyBattleSettings(gameModeId);
+			familyBattle = 0; // disable until fully supported
 	}
 	else
 	{
