@@ -215,14 +215,14 @@ void CPacketHelper_FullUserInfo::Build(Buffer& buf, int userID, const CUserChara
 		buf.writeArray(PackAchievementList(character.achievementList));
 	}
 
-	// bit 20
+	// bit 20 - new client reads: uint16(728) + uint8(740) + uint16(732) + uint16(736) + uint8(741) = 7 bytes
 	if (maskedLowFlag & UFLAG_LOW_UNK20)
 	{
-		buf.writeUInt16_LE(0);
-		buf.writeUInt16_LE(0);
-		buf.writeUInt16_LE(0);
-		buf.writeUInt16_LE(0);
-		buf.writeUInt16_LE(0);
+		buf.writeUInt16_LE(0); // a4+728
+		buf.writeUInt8(0);     // a4+740 (bool)
+		buf.writeUInt16_LE(0); // a4+732
+		buf.writeUInt16_LE(0); // a4+736
+		buf.writeUInt8(0);     // a4+741 (bool)
 	}
 
 	// bit 21
