@@ -76,6 +76,8 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		return OnUserSpawn(msg, socket);
 	case HostPacketType::OnUpdateClass:
 		return OnUpdateClass(msg, room, gameMatch);
+	case HostPacketType::OnRoundStart:
+		return OnRoundStart(msg, socket);
 	case HostPacketType::OnChangeMap:
 		return OnChangeMap(msg, room);
 	case 15:
