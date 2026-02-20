@@ -2605,16 +2605,12 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 			msg->WriteUInt8(newSettings->voxel_unk23);
 		}
 	}
-	// NEW flags in new client (bit 19 area) - between VOXEL and UNK63
-	// LABEL_290: uint32, if nonzero reads more data
-	if (lowMidFlag & ROOM_LOWMID_UNK_NEW1) {
-		msg->WriteUInt32(0);
-	}
-	// LABEL_299: uint8 count + loop of uint16s
+	// bit19 (ROOM_LOWMID_UNK_NEW1) has NO handler in new client - do not write
+	// LABEL_299: uint8 count + loop of uint16s (bit20)
 	if (lowMidFlag & ROOM_LOWMID_UNK_NEW2) {
 		msg->WriteUInt8(0); // count = 0, no entries
 	}
-	// LABEL_304: uint8 bool
+	// LABEL_304: uint8 bool (bit21)
 	if (lowMidFlag & ROOM_LOWMID_UNK_NEW3) {
 		msg->WriteUInt8(0);
 	}
@@ -2679,7 +2675,9 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	if (highMidFlag & ROOM_HIGHMID_MUTATIONLIMIT) {
 		msg->WriteUInt8(newSettings->mutationLimit);
 	}
-	// ROOM_HIGHMID_FLOATINGDAMAGESKIN (bit3) has no handler in new client - do not write
+	if (highMidFlag & ROOM_HIGHMID_FLOATINGDAMAGESKIN) {
+		msg->WriteUInt8(newSettings->floatingDamageSkin);
+	}
 	if (highMidFlag & ROOM_HIGHMID_PLAYERONETEAM) {
 		msg->WriteUInt8(newSettings->playerOneTeam);
 	}
