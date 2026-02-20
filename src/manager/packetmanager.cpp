@@ -2323,6 +2323,7 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 		msg->WriteUInt8(newSettings->unk02);
 		msg->WriteUInt8(newSettings->unk03);
 		msg->WriteUInt32(newSettings->unk04);
+		msg->WriteUInt8(0); // new client requires 8 bytes total for CLANBATTLE
 	}
 	if (lowFlag & ROOM_LOW_PASSWORD) {
 		msg->WriteString(newSettings->password);
@@ -2678,19 +2679,12 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	if (highMidFlag & ROOM_HIGHMID_MUTATIONLIMIT) {
 		msg->WriteUInt8(newSettings->mutationLimit);
 	}
-	if (highMidFlag & ROOM_HIGHMID_FLOATINGDAMAGESKIN) {
-		msg->WriteUInt8(newSettings->floatingDamageSkin);
-	}
+	// ROOM_HIGHMID_FLOATINGDAMAGESKIN (bit3) has no handler in new client - do not write
 	if (highMidFlag & ROOM_HIGHMID_PLAYERONETEAM) {
 		msg->WriteUInt8(newSettings->playerOneTeam);
 	}
 	if (highMidFlag & ROOM_HIGHMID_WEAPONRESTRICT) {
 		msg->WriteUInt8(newSettings->weaponRestrict);
-		// new client reads 4 more bytes in a loop after weaponRestrict
-		msg->WriteUInt8(0);
-		msg->WriteUInt8(0);
-		msg->WriteUInt8(0);
-		msg->WriteUInt8(0);
 	}
 	if (highMidFlag & ROOM_HIGHMID_FAMILYBATTLE) {
 		msg->WriteUInt8(newSettings->familyBattle);
