@@ -2646,12 +2646,10 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	if (lowMidFlag & ROOM_LOWMID_ISZBCOMPETITIVE) {
 		msg->WriteUInt8(newSettings->isZbCompetitive);
 	}
-	if (lowMidFlag & ROOM_LOWMID_ZBAUTOHUNTING) {
-		msg->WriteUInt8(newSettings->zbAutoHunting);
-	}
-	if (lowMidFlag & ROOM_LOWMID_INTEGRATEDTEAM) {
-		msg->WriteUInt8(newSettings->integratedTeam);
-	}
+	// lowMid bits 30 (ZBAUTOHUNTING) and 31 (INTEGRATEDTEAM) have no handlers in the
+	// new client (sub_25B92C0). Client skips them; writing bytes here shifts the player list.
+	// if (lowMidFlag & ROOM_LOWMID_ZBAUTOHUNTING) { msg->WriteUInt8(newSettings->zbAutoHunting); }
+	// if (lowMidFlag & ROOM_LOWMID_INTEGRATEDTEAM) { msg->WriteUInt8(newSettings->integratedTeam); }
 	if (lowMidFlag & ROOM_LOWMID_UNK73) {
 		msg->WriteUInt8(newSettings->unk73);
 	}
