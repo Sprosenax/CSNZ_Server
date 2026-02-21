@@ -438,6 +438,13 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		if (!item.m_nItemID)
 			return false;
 
+		// Crash fix: GetCell throws if itemID not in item table -> server crash.
+		if (g_pItemTable->GetRowIdx(to_string(item.m_nItemID)) < 0)
+		{
+			Logger().Warn("CItemManager::OnItemPacket: itemID %d not found in item table\n", item.m_nItemID);
+			return false;
+		}
+
 		string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
 
 		if (inventoryType == 1 || className == "LobbyBG" || className == "zbRespawnEffect" || className == "CombatInfoItem") // switch status
@@ -1361,6 +1368,14 @@ int CItemManager::UseItem(IUser* user, int slot, int additionalArg, int addition
 	{
 		Logger().Info(OBFUSCATE("CItemManager::UseItem: item == NULL, slot: %d\n"), slot);
 		return ITEM_USE_BAD_SLOT;
+	}
+
+	// Crash fix: rapidcsv throws std::out_of_range if itemID is not in item table.
+	// This crashes the server (unhandled exception) for any item missing from Item.csv.
+	if (g_pItemTable->GetRowIdx(to_string(item.m_nItemID)) < 0)
+	{
+		Logger().Warn("CItemManager::UseItem: itemID %d not found in item table\n", item.m_nItemID);
+		return ITEM_USE_WRONG_ITEM;
 	}
 
 	string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
