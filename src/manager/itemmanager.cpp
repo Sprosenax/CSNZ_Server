@@ -2749,9 +2749,7 @@ bool CItemManager::OnSwitchInUseRequest(IUser* user, CReceivePacket* msg)
 
 	item.m_nStatus = updateStatus;
 
-	item.ConvertDurationToExpiryDate();
-
-	g_UserDatabase.UpdateInventoryItem(user->GetID(), item, UITEM_FLAG_INUSE | UITEM_FLAG_STATUS | UITEM_FLAG_EXPIRYDATE);
+	g_UserDatabase.UpdateInventoryItem(user->GetID(), item, UITEM_FLAG_INUSE | UITEM_FLAG_STATUS);
 
 	vector<CUserInventoryItem> items;
 	item.PushItem(items, item);
