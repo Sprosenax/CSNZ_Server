@@ -503,16 +503,14 @@ bool CUserManager::OnSwitchConfigPacket(CReceivePacket* msg, IExtendedSocket* so
 	// Replaces/supplements the old Favorite SetLoadout (Favorite packet subtype).
 	// Log all fields until the exact structure is confirmed via IDA.
 	int subtype = msg->ReadUInt8();
-	Logger().Warn("OnSwitchConfigPacket: subtype=%d len=%d
-", subtype, msg->GetLength());
+	Logger().Warn("OnSwitchConfigPacket: subtype=%d len=%d\n", subtype, msg->GetLength());
 
 	switch (subtype)
 	{
 	case 0: // switch active config slot
 	{
 		int configID = msg->ReadUInt8();
-		Logger().Info("OnSwitchConfigPacket: switch to config %d
-", configID);
+		Logger().Info("OnSwitchConfigPacket: switch to config %d\n", configID);
 
 		CUserCharacterExtended character = user->GetCharacterExtended(EXT_UFLAG_CURLOADOUT);
 		if (configID < LOADOUT_COUNT)
@@ -527,8 +525,7 @@ bool CUserManager::OnSwitchConfigPacket(CReceivePacket* msg, IExtendedSocket* so
 	{
 		int slotID = msg->ReadUInt8();
 		int itemID = msg->ReadUInt16();
-		Logger().Info("OnSwitchConfigPacket: assign itemID=%d to slot=%d
-", itemID, slotID);
+		Logger().Info("OnSwitchConfigPacket: assign itemID=%d to slot=%d\n", itemID, slotID);
 
 		CUserCharacterExtended character = user->GetCharacterExtended(EXT_UFLAG_CURLOADOUT);
 		if (slotID < LOADOUT_SLOT_COUNT && character.curLoadout < LOADOUT_COUNT)
@@ -536,8 +533,7 @@ bool CUserManager::OnSwitchConfigPacket(CReceivePacket* msg, IExtendedSocket* so
 		break;
 	}
 	default:
-		Logger().Warn("OnSwitchConfigPacket: unknown subtype %d
-", subtype);
+		Logger().Warn("OnSwitchConfigPacket: unknown subtype %d\n", subtype);
 		break;
 	}
 
