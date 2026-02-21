@@ -22,6 +22,7 @@ public:
 	bool OnOptionPacket(CReceivePacket* msg, IExtendedSocket* socket);
 	bool OnVersionPacket(CReceivePacket* msg, IExtendedSocket* socket);
 	bool OnFavoritePacket(CReceivePacket* msg, IExtendedSocket* socket);
+	bool OnSwitchConfigPacket(CReceivePacket* msg, IExtendedSocket* socket);
 	bool OnCharacterPacket(CReceivePacket* msg, IExtendedSocket* socket);
 	bool OnUserMessage(CReceivePacket* msg, IExtendedSocket* socket);
 	bool OnUpdateInfoPacket(CReceivePacket* msg, IExtendedSocket* socket);

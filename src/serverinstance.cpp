@@ -535,6 +535,9 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 		Logger().Warn("Packet_Metadata subtype: %d (len: %d)\n", subtype, msg->GetLength());
 		break;
 	}
+	case PacketId::SwitchConfig:
+		g_UserManager.OnSwitchConfigPacket(msg, s);
+		break;
 	default:
 		Logger().Warn("Unimplemented packet: %d\n", msg->GetID());
 		break;

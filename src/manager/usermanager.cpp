@@ -491,6 +491,59 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 	return true;
 }
 
+bool CUserManager::OnSwitchConfigPacket(CReceivePacket* msg, IExtendedSocket* socket)
+{
+	LOG_PACKET;
+
+	IUser* user = GetUserBySocket(socket);
+	if (!user)
+		return false;
+
+	// SwitchConfig (packet 184): sent by new client when equipping weapons in inventory.
+	// Replaces/supplements the old Favorite SetLoadout (Favorite packet subtype).
+	// Log all fields until the exact structure is confirmed via IDA.
+	int subtype = msg->ReadUInt8();
+	Logger().Warn("OnSwitchConfigPacket: subtype=%d len=%d
+", subtype, msg->GetLength());
+
+	switch (subtype)
+	{
+	case 0: // switch active config slot
+	{
+		int configID = msg->ReadUInt8();
+		Logger().Info("OnSwitchConfigPacket: switch to config %d
+", configID);
+
+		CUserCharacterExtended character = user->GetCharacterExtended(EXT_UFLAG_CURLOADOUT);
+		if (configID < LOADOUT_COUNT)
+		{
+			character.flag = EXT_UFLAG_CURLOADOUT;
+			character.curLoadout = configID;
+			g_UserDatabase.UpdateCharacterExtended(user->GetID(), character);
+		}
+		break;
+	}
+	case 1: // assign item to slot in current config
+	{
+		int slotID = msg->ReadUInt8();
+		int itemID = msg->ReadUInt16();
+		Logger().Info("OnSwitchConfigPacket: assign itemID=%d to slot=%d
+", itemID, slotID);
+
+		CUserCharacterExtended character = user->GetCharacterExtended(EXT_UFLAG_CURLOADOUT);
+		if (slotID < LOADOUT_SLOT_COUNT && character.curLoadout < LOADOUT_COUNT)
+			g_UserDatabase.UpdateLoadout(user->GetID(), character.curLoadout, slotID, itemID);
+		break;
+	}
+	default:
+		Logger().Warn("OnSwitchConfigPacket: unknown subtype %d
+", subtype);
+		break;
+	}
+
+	return true;
+}
+
 bool CUserManager::OnFavoriteSetBuyMenu(CReceivePacket* msg, IUser* user)
 {
 	int subMenuID = msg->ReadUInt8();
