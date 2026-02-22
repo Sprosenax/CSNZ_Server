@@ -1885,7 +1885,8 @@ bool CChannelManager::OnRoomSetZBAddonRequest(CReceivePacket* msg, IUser* user)
 	{
 		int itemID = msg->ReadUInt16();
 
-		if (g_pItemTable->GetCell<string>("ClassName", to_string(itemID)) == "zbsaddonitem")
+		if (g_pItemTable->GetRowIdx(to_string(itemID)) >= 0 &&
+			g_pItemTable->GetCell<string>("ClassName", to_string(itemID)) == "zbsaddonitem")
 		{
 			vector<CUserInventoryItem> items;
 			if (g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items))

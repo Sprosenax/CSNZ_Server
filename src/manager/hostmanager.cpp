@@ -248,7 +248,9 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* sock
 			inGameItems.begin(),
 			inGameItems.end(),
 			[](const CUserInventoryItem& item) -> bool {
-				return !(item.m_nItemID && item.m_nInUse && g_pItemTable->GetCell<int>("InGameItem", to_string(item.m_nItemID)));
+				if (!item.m_nItemID || !item.m_nInUse) return true;
+				if (g_pItemTable->GetRowIdx(to_string(item.m_nItemID)) < 0) return true;
+				return !g_pItemTable->GetCell<int>("InGameItem", to_string(item.m_nItemID));
 			}
 		),
 		inGameItems.end()
@@ -260,6 +262,7 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* sock
 			inGameItems.begin(),
 			inGameItems.end(),
 			[](const CUserInventoryItem& item) -> bool {
+				if (g_pItemTable->GetRowIdx(to_string(item.m_nItemID)) < 0) return false;
 				int category = g_pItemTable->GetCell<int>("Category", to_string(item.m_nItemID));
 				return ((category >= 1 && category <= 6 || category == 11) ? !item.m_nStatus : false);
 			}

@@ -459,6 +459,13 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 		if (!g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items))
 			return false;
 
+		// Crash fix: GetCell throws if itemID not in item table -> server crash.
+		if (g_pItemTable->GetRowIdx(to_string(itemID)) < 0)
+		{
+			Logger().Warn("CUserManager::OnFavoriteSetLoadout: itemID %d not found in item table\n", itemID);
+			return false;
+		}
+
 		int category = g_pItemTable->GetCell<int>("Category", to_string(itemID));
 
 		if (category != 11 && (category < 1 || category > 6))
@@ -472,6 +479,13 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 		vector<CUserInventoryItem> items;
 		if (!g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items))
 			return false;
+
+		// Crash fix: GetCell throws if itemID not in item table -> server crash.
+		if (g_pItemTable->GetRowIdx(to_string(itemID)) < 0)
+		{
+			Logger().Warn("CUserManager::OnFavoriteSetLoadout: itemID %d not found in item table\n", itemID);
+			return false;
+		}
 
 		int category = g_pItemTable->GetCell<int>("Category", to_string(itemID));
 
@@ -980,6 +994,10 @@ bool CUserManager::OnUpdateInfoPacket(CReceivePacket* msg, IExtendedSocket* sock
 
 		if (chatColorID)
 		{
+			// Crash fix: GetCell throws if itemID not in item table -> server crash.
+			if (g_pItemTable->GetRowIdx(to_string(chatColorID)) < 0)
+				return true;
+
 			string resourceName = g_pItemTable->GetCell<string>("recourcename", to_string(chatColorID));
 			if (resourceName.find("chatcolor_") == std::string::npos)
 				return true;
