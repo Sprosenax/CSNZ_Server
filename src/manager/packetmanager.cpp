@@ -3369,7 +3369,7 @@ void CPacketManager::SendHostServerJoin(IExtendedSocket* socket, int ipAddress, 
 	msg->WriteUInt8(HostPacketType::HostServerJoin);
 	msg->WriteUInt32(ipAddress, false);
 	msg->WriteUInt16(port);
-	msg->WriteUInt64(userId);
+	msg->WriteUInt32(userId);
 	socket->Send(msg);
 }
 
