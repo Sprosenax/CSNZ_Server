@@ -3367,11 +3367,16 @@ void CPacketManager::SendHostServerJoin(IExtendedSocket* socket, int ipAddress, 
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
 	msg->WriteUInt8(HostPacketType::HostServerJoin);
-	// client layout (Packet_Host fields): v25+24=userID, v25+28=unk, v25+32=IP(inet_ntoa), v25+36=port
-	msg->WriteUInt32(userId);           // → v25+24
-	msg->WriteUInt32(0);                // → v25+28 (unk padding)
-	msg->WriteUInt32(htonl(ipAddress)); // → v25+32 (inet_ntoa expects network byte order)
-	msg->WriteUInt16(port);             // → v25+36
+	// Decoder (sub_2590D80 case 5):
+	// 1. sub_26A0450 reads a null-terminated IP string → resolved to a1+32
+	// 2. ReadUInt32 → fallback raw IP (used if string lookup fails) → a1+32
+	// 3. ReadUInt16 → port → a1+36
+	// 4. Read 8 bytes (float + uint32) → a1+40, a1+44 (gamemode/map)
+	msg->WriteString(ip_to_string(ipAddress)); // IP as "x.x.x.x\0"
+	msg->WriteUInt32(ipAddress);               // fallback raw IP (host byte order)
+	msg->WriteUInt16(port);                    // port
+	msg->WriteUInt32(0);                       // gamemode placeholder → a1+40
+	msg->WriteUInt32(0);                       // map placeholder → a1+44
 	socket->Send(msg);
 }
 
@@ -3430,21 +3435,17 @@ void CPacketManager::SendHostGameStart(IExtendedSocket* socket, int userId)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
-
 	msg->WriteUInt8(HostPacketType::GameStart);
-	// client reads: v25+24 = userID (DWORD)
-	msg->WriteUInt32(userId);
-	// v25+28 = unk DWORD (server category / analytics flags)
-	msg->WriteUInt8(0); // server category
-	msg->WriteUInt8(0); // enable nexon analytics
-	msg->WriteUInt16(0); // pad to DWORD boundary → fills v25+28..+31
-	// v25+32..+39 = unk (client reads v25+40 and v25+44 in dedi mode for gamemode/map)
-	msg->WriteUInt32(0); // v25+32
-	msg->WriteUInt32(0); // v25+36
-	// v25+40 = gameModeId, v25+44 = mapId (client reads these in dedi/dedicated mode)
-	msg->WriteUInt32(0); // gameModeId placeholder
-	msg->WriteUInt32(0); // mapId placeholder
-
+	// Decoder (sub_2590D80 case 0):
+	// ReadUInt32 → a1+24 (userID/hostID)
+	// ReadUInt8  → serverCategory
+	// ReadUInt8  → enableNexonAnalytics
+	// Read 8 bytes (float+uint32) → a1+40, a1+44 (gameModeId, mapId)
+	msg->WriteUInt32(userId);  // hostID → a1+24
+	msg->WriteUInt8(0);        // serverCategory
+	msg->WriteUInt8(0);        // enableNexonAnalytics
+	msg->WriteUInt32(0);       // gameModeId (float) → a1+40
+	msg->WriteUInt32(0);       // mapId → a1+44
 	socket->Send(msg);
 }
 
@@ -3469,21 +3470,27 @@ void CPacketManager::SendHostJoin(IExtendedSocket* socket, IUser* host)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
-
 	msg->WriteUInt8(HostPacketType::HostJoin);
-	msg->WriteUInt32(host->GetID());    // → v25+24: hostUserID
-	msg->WriteUInt64(0);                // → v25+28..+35: unk (hole punch session data?)
+	// Decoder (sub_2590D80 case 1):
+	// ReadUInt32 → a1+24 (hostUserID)
+	// Read 8 bytes (float+uint32) → a1+40, a1+44 (gameModeId, mapId)
+	// ReadUInt32 → extIP
+	// ReadUInt16 → extClientPort
+	// ReadUInt16 → extServerPort
+	// ReadUInt32 → localIP
+	// ReadUInt16 → localClientPort
+	// ReadUInt16 → localServerPort
+	msg->WriteUInt32(host->GetID()); // hostUserID → a1+24
+	msg->WriteUInt32(0);             // gameModeId (float) → a1+40
+	msg->WriteUInt32(0);             // mapId → a1+44
 
 	UserNetworkConfig_s network = host->GetNetworkConfig();
-
-	// Client reads IP via inet_ntoa (network byte order) — use htonl to convert from host byte order
-	msg->WriteUInt32(htonl(ip_string_to_int(network.m_szExternalIpAddress))); // → v25+36: extIP
-	msg->WriteUInt16(network.m_nExternalClientPort);  // → v25+40: extClientPort
-	msg->WriteUInt16(network.m_nExternalServerPort);  // → v25+42: extServerPort
-	msg->WriteUInt32(htonl(ip_string_to_int(network.m_szLocalIpAddress)));    // → v25+44: localIP
-	msg->WriteUInt16(network.m_nLocalClientPort);     // → v25+48: localClientPort
-	msg->WriteUInt16(network.m_nLocalServerPort);     // → v25+50: localServerPort
-
+	msg->WriteUInt32(ip_string_to_int(network.m_szExternalIpAddress)); // extIP
+	msg->WriteUInt16(network.m_nExternalClientPort);
+	msg->WriteUInt16(network.m_nExternalServerPort);
+	msg->WriteUInt32(ip_string_to_int(network.m_szLocalIpAddress));    // localIP
+	msg->WriteUInt16(network.m_nLocalClientPort);
+	msg->WriteUInt16(network.m_nLocalServerPort);
 	socket->Send(msg);
 }
 
