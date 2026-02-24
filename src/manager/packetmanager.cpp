@@ -3367,9 +3367,11 @@ void CPacketManager::SendHostServerJoin(IExtendedSocket* socket, int ipAddress, 
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
 	msg->WriteUInt8(HostPacketType::HostServerJoin);
-	msg->WriteUInt32(ipAddress, false);
-	msg->WriteUInt16(port);
-	msg->WriteUInt32(userId);
+	// client layout (Packet_Host fields): v25+24=userID, v25+28=unk, v25+32=IP(inet_ntoa), v25+36=port
+	msg->WriteUInt32(userId);           // → v25+24
+	msg->WriteUInt32(0);                // → v25+28 (unk padding)
+	msg->WriteUInt32(htonl(ipAddress)); // → v25+32 (inet_ntoa expects network byte order)
+	msg->WriteUInt16(port);             // → v25+36
 	socket->Send(msg);
 }
 
@@ -3430,10 +3432,18 @@ void CPacketManager::SendHostGameStart(IExtendedSocket* socket, int userId)
 	msg->BuildHeader();
 
 	msg->WriteUInt8(HostPacketType::GameStart);
+	// client reads: v25+24 = userID (DWORD)
 	msg->WriteUInt32(userId);
-	msg->WriteUInt8(0); // server category /// @todo investigate
-	msg->WriteUInt8(0); // enable nexon analytics(it write every step on the map like kill event etc)
-	msg->WriteUInt64(5555); // unk
+	// v25+28 = unk DWORD (server category / analytics flags)
+	msg->WriteUInt8(0); // server category
+	msg->WriteUInt8(0); // enable nexon analytics
+	msg->WriteUInt16(0); // pad to DWORD boundary → fills v25+28..+31
+	// v25+32..+39 = unk (client reads v25+40 and v25+44 in dedi mode for gamemode/map)
+	msg->WriteUInt32(0); // v25+32
+	msg->WriteUInt32(0); // v25+36
+	// v25+40 = gameModeId, v25+44 = mapId (client reads these in dedi/dedicated mode)
+	msg->WriteUInt32(0); // gameModeId placeholder
+	msg->WriteUInt32(0); // mapId placeholder
 
 	socket->Send(msg);
 }
@@ -3461,17 +3471,18 @@ void CPacketManager::SendHostJoin(IExtendedSocket* socket, IUser* host)
 	msg->BuildHeader();
 
 	msg->WriteUInt8(HostPacketType::HostJoin);
-	msg->WriteUInt32(host->GetID());
-	msg->WriteUInt64(0); // что это?
+	msg->WriteUInt32(host->GetID());    // → v25+24: hostUserID
+	msg->WriteUInt64(0);                // → v25+28..+35: unk (hole punch session data?)
 
 	UserNetworkConfig_s network = host->GetNetworkConfig();
 
-	msg->WriteUInt32(ip_string_to_int(network.m_szExternalIpAddress), false);
-	msg->WriteUInt16(network.m_nExternalClientPort);
-	msg->WriteUInt16(network.m_nExternalServerPort);
-	msg->WriteUInt32(ip_string_to_int(network.m_szLocalIpAddress), false);
-	msg->WriteUInt16(network.m_nLocalClientPort);
-	msg->WriteUInt16(network.m_nLocalServerPort);
+	// Client reads IP via inet_ntoa (network byte order) — use htonl to convert from host byte order
+	msg->WriteUInt32(htonl(ip_string_to_int(network.m_szExternalIpAddress))); // → v25+36: extIP
+	msg->WriteUInt16(network.m_nExternalClientPort);  // → v25+40: extClientPort
+	msg->WriteUInt16(network.m_nExternalServerPort);  // → v25+42: extServerPort
+	msg->WriteUInt32(htonl(ip_string_to_int(network.m_szLocalIpAddress)));    // → v25+44: localIP
+	msg->WriteUInt16(network.m_nLocalClientPort);     // → v25+48: localClientPort
+	msg->WriteUInt16(network.m_nLocalServerPort);     // → v25+50: localServerPort
 
 	socket->Send(msg);
 }
