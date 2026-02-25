@@ -3373,7 +3373,7 @@ void CPacketManager::SendHostServerJoin(IExtendedSocket* socket, int ipAddress, 
 	// 3. ReadUInt16 → port → a1+36
 	// 4. Read 8 bytes (float + uint32) → a1+40, a1+44 (gamemode/map)
 	msg->WriteString(ip_to_string(ipAddress)); // IP as "x.x.x.x\0"
-	msg->WriteUInt32(ipAddress);               // fallback raw IP (host byte order)
+	msg->WriteUInt32(htonl(ipAddress));        // fallback raw IP (network byte order for inet_ntoa)
 	msg->WriteUInt16(port);                    // port
 	msg->WriteUInt32(0);                       // gamemode placeholder → a1+40
 	msg->WriteUInt32(0);                       // map placeholder → a1+44
