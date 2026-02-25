@@ -149,7 +149,7 @@ public:
 	virtual void SendVoxelRoomList(IExtendedSocket* socket, const std::vector<IRoom*>& rooms) = 0;
 	
 	virtual void SendHostOnItemUse(IExtendedSocket* socket, int userId, int itemId) = 0;
-	virtual void SendHostServerJoin(IExtendedSocket* socket, int ipAddress, int port, int userId) = 0;
+	virtual void SendHostServerJoin(IExtendedSocket* socket, const std::string& ipString, int port, int userId) = 0;
 	virtual void SendHostStop(IExtendedSocket* socket) = 0;
 	virtual void SendHostLeaveResultWindow(IExtendedSocket* socket) = 0;
 	virtual void SendHostUserInventory(IExtendedSocket* socket, int userId, const std::vector<CUserInventoryItem>& items) = 0;
