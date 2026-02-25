@@ -3375,8 +3375,8 @@ void CPacketManager::SendHostServerJoin(IExtendedSocket* socket, const std::stri
 	// 4. ReadFloat+UInt32 (8 bytes) -> gamemode/map -> a1+40, a1+44
 	uint32_t rawIP = (uint32_t)inet_addr(ipString.c_str()); // network byte order
 	msg->WriteString(ipString);              // IP string "x.x.x.x"
-	msg->WriteUInt32(rawIP, false);          // fallback raw IP, big-endian (network order)
-	msg->WriteUInt16(port, false);           // port, big-endian
+	msg->WriteUInt32(rawIP);                 // fallback raw IP - already in network byte order, write as-is (LE writes it correctly)
+	msg->WriteUInt16(htons(port));           // port - convert to network byte order, write as-is
 	msg->WriteUInt32(0);                     // gamemode placeholder
 	msg->WriteUInt32(0);                     // map placeholder
 	socket->Send(msg);
