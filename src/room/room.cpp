@@ -236,9 +236,9 @@ void CRoom::SetStatus(RoomStatus newStatus)
 	m_pSettings->statusSymbol = newStatus == RoomStatus::STATUS_INGAME ? 3 : 0;
 }
 
-void CRoom::SendJoinNewRoom(IUser* user, bool joining)
+void CRoom::SendJoinNewRoom(IUser* user)
 {
-	g_PacketManager.SendRoomCreateAndJoin(user->GetExtendedSocket(), this, joining);
+	g_PacketManager.SendRoomCreateAndJoin(user->GetExtendedSocket(), this);
 }
 
 void CRoom::UpdateSettings(CRoomSettings& newSettings)
@@ -254,12 +254,13 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 	if (newSettings.lowFlag & ROOM_LOW_UNK) {
 		m_pSettings->unk00 = newSettings.unk00;
 	}
-	if (newSettings.lowFlag & ROOM_LOW_CLANBATTLE) {
-		m_pSettings->unk01 = newSettings.unk01;
-		m_pSettings->unk02 = newSettings.unk02;
-		m_pSettings->unk03 = newSettings.unk03;
-		m_pSettings->unk04 = newSettings.unk04;
-	}
+	//	unused
+	//if (newSettings.lowFlag & ROOM_LOW_CLANBATTLE) {
+	//	m_pSettings->unk01 = newSettings.unk01;
+	//	m_pSettings->unk02 = newSettings.unk02;
+	//	m_pSettings->unk03 = newSettings.unk03;
+	//	m_pSettings->unk04 = newSettings.unk04;
+	//}
 	if (newSettings.lowFlag & ROOM_LOW_PASSWORD) {
 		m_pSettings->password = newSettings.password;
 	}
@@ -346,18 +347,20 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 	if (newSettings.lowFlag & ROOM_LOW_STATUS) {
 		m_pSettings->status = newSettings.status;
 	}
-	if (newSettings.lowFlag & ROOM_LOW_UNK33) {
-		m_pSettings->unk33 = newSettings.unk33;
-		m_pSettings->unk33_vec = newSettings.unk33_vec;
-	}
+	//	unused
+	//if (newSettings.lowFlag & ROOM_LOW_UNK33) {
+	//	m_pSettings->unk33 = newSettings.unk33;
+	//	m_pSettings->unk33_vec = newSettings.unk33_vec;
+	//}
 
-	if (newSettings.lowMidFlag & ROOM_LOWMID_UNK34) {
-		m_pSettings->unk34 = newSettings.unk34;
-		m_pSettings->unk35 = newSettings.unk35;
-		m_pSettings->unk36 = newSettings.unk36;
-		m_pSettings->unk37 = newSettings.unk37;
-		m_pSettings->unk38 = newSettings.unk38;
-	}
+	//	unused
+	//if (newSettings.lowMidFlag & ROOM_LOWMID_UNK34) {
+	//	m_pSettings->unk34 = newSettings.unk34;
+	//	m_pSettings->unk35 = newSettings.unk35;
+	//	m_pSettings->unk36 = newSettings.unk36;
+	//	m_pSettings->unk37 = newSettings.unk37;
+	//	m_pSettings->unk38 = newSettings.unk38;
+	//}
 	if (newSettings.lowMidFlag & ROOM_LOWMID_C4TIMER) {
 		m_pSettings->c4Timer = newSettings.c4Timer;
 	}
@@ -417,79 +420,80 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 		m_pSettings->zbLimitFlag = newSettings.zbLimitFlag;
 		m_pSettings->zbLimit = newSettings.zbLimit;
 	}
-	if (newSettings.lowMidFlag & ROOM_LOWMID_VOXEL) {
-		m_pSettings->voxelFlag = newSettings.voxelFlag;
-		if (m_pSettings->voxelFlag & VOXELFLAG_ID) {
-			m_pSettings->voxel_id = newSettings.voxel_id;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_RESOURCEID) {
-			m_pSettings->voxel_resource_id = newSettings.voxel_resource_id;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_RESOURCEMAXPLAYER) {
-			m_pSettings->voxel_resource_max_player = newSettings.voxel_resource_max_player;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_TITLE) {
-			m_pSettings->voxel_title = newSettings.voxel_title;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_RESOURCEMODE) {
-			m_pSettings->voxel_resource_mode = newSettings.voxel_resource_mode;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_PERMISSION) {
-			m_pSettings->voxel_permission = newSettings.voxel_permission;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_DESCRIPTION) {
-			m_pSettings->voxel_description = newSettings.voxel_description;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_PARENTSSLOTID) {
-			m_pSettings->voxel_parents_slot_id = newSettings.voxel_parents_slot_id;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_IMAGEID) {
-			m_pSettings->voxel_image_id = newSettings.voxel_image_id;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_CREATORNICKNAME) {
-			m_pSettings->voxel_creator_nickname = newSettings.voxel_creator_nickname;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_CREATORUSERNAME) {
-			m_pSettings->voxel_creator_username = newSettings.voxel_creator_username;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_LIKECOUNT) {
-			m_pSettings->voxel_like_count = newSettings.voxel_like_count;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_PLAYCOUNT) {
-			m_pSettings->voxel_play_count = newSettings.voxel_play_count;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_BOOKMARKCOUNT) {
-			m_pSettings->voxel_bookmark_count = newSettings.voxel_bookmark_count;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_UNK15) {
-			m_pSettings->voxel_unk15_size = newSettings.voxel_unk15_size;
-			m_pSettings->voxel_unk15_vec = newSettings.voxel_unk15_vec;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_CUBECOUNT) {
-			m_pSettings->voxel_cube_count = newSettings.voxel_cube_count;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_UNK17) {
-			m_pSettings->voxel_unk17 = newSettings.voxel_unk17;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_UNK18) {
-			m_pSettings->voxel_unk18 = newSettings.voxel_unk18;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_SLOTCATEGORY) {
-			m_pSettings->voxel_slot_category = newSettings.voxel_slot_category;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_SANDBOXSCRIPT) {
-			m_pSettings->voxel_sandbox_script = newSettings.voxel_sandbox_script;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_SAVEGROUPID) {
-			m_pSettings->voxel_savegroup_id = newSettings.voxel_savegroup_id;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_UNK22) {
-			m_pSettings->voxel_unk22 = newSettings.voxel_unk22;
-		}
-		if (m_pSettings->voxelFlag & VOXELFLAG_UNK23) {
-			m_pSettings->voxel_unk23 = newSettings.voxel_unk23;
-		}
-	}
+	// unused
+	//if (newSettings.lowMidFlag & ROOM_LOWMID_VOXEL) {
+	//	m_pSettings->voxelFlag = newSettings.voxelFlag;
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_ID) {
+	//		m_pSettings->voxel_id = newSettings.voxel_id;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_RESOURCEID) {
+	//		m_pSettings->voxel_resource_id = newSettings.voxel_resource_id;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_RESOURCEMAXPLAYER) {
+	//		m_pSettings->voxel_resource_max_player = newSettings.voxel_resource_max_player;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_TITLE) {
+	//		m_pSettings->voxel_title = newSettings.voxel_title;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_RESOURCEMODE) {
+	//		m_pSettings->voxel_resource_mode = newSettings.voxel_resource_mode;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_PERMISSION) {
+	//		m_pSettings->voxel_permission = newSettings.voxel_permission;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_DESCRIPTION) {
+	//		m_pSettings->voxel_description = newSettings.voxel_description;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_PARENTSSLOTID) {
+	//		m_pSettings->voxel_parents_slot_id = newSettings.voxel_parents_slot_id;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_IMAGEID) {
+	//		m_pSettings->voxel_image_id = newSettings.voxel_image_id;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_CREATORNICKNAME) {
+	//		m_pSettings->voxel_creator_nickname = newSettings.voxel_creator_nickname;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_CREATORUSERNAME) {
+	//		m_pSettings->voxel_creator_username = newSettings.voxel_creator_username;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_LIKECOUNT) {
+	//		m_pSettings->voxel_like_count = newSettings.voxel_like_count;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_PLAYCOUNT) {
+	//		m_pSettings->voxel_play_count = newSettings.voxel_play_count;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_BOOKMARKCOUNT) {
+	//		m_pSettings->voxel_bookmark_count = newSettings.voxel_bookmark_count;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_UNK15) {
+	//		m_pSettings->voxel_unk15_size = newSettings.voxel_unk15_size;
+	//		m_pSettings->voxel_unk15_vec = newSettings.voxel_unk15_vec;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_CUBECOUNT) {
+	//		m_pSettings->voxel_cube_count = newSettings.voxel_cube_count;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_UNK17) {
+	//		m_pSettings->voxel_unk17 = newSettings.voxel_unk17;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_UNK18) {
+	//		m_pSettings->voxel_unk18 = newSettings.voxel_unk18;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_SLOTCATEGORY) {
+	//		m_pSettings->voxel_slot_category = newSettings.voxel_slot_category;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_SANDBOXSCRIPT) {
+	//		m_pSettings->voxel_sandbox_script = newSettings.voxel_sandbox_script;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_SAVEGROUPID) {
+	//		m_pSettings->voxel_savegroup_id = newSettings.voxel_savegroup_id;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_UNK22) {
+	//		m_pSettings->voxel_unk22 = newSettings.voxel_unk22;
+	//	}
+	//	if (m_pSettings->voxelFlag & VOXELFLAG_UNK23) {
+	//		m_pSettings->voxel_unk23 = newSettings.voxel_unk23;
+	//	}
+	//}
 	if (newSettings.lowMidFlag & ROOM_LOWMID_UNK63) {
 		m_pSettings->unk63 = newSettings.unk63;
 		m_pSettings->unk63_vec = newSettings.unk63_vec;
@@ -562,6 +566,20 @@ void CRoom::UpdateSettings(CRoomSettings& newSettings)
 		m_pSettings->unk79_4 = newSettings.unk79_4;
 	}
 
+	if (newSettings.highMidFlag & ROOM_HIGHMID_ZSSPEEDRUN) {
+		m_pSettings->m_bIsZSSpeedRun = newSettings.m_bIsZSSpeedRun;
+	}
+	if (newSettings.highMidFlag & ROOM_HIGHMID_CHANGESHOT) {
+		m_pSettings->m_bIsChangeShot = newSettings.m_bIsChangeShot;
+	}
+	if (newSettings.highMidFlag & ROOM_HIGHMID_ZOMBIEPERMADEATH) {
+		m_pSettings->m_nZombiePermaDeath = newSettings.m_nZombiePermaDeath;
+	}
+	if (newSettings.highMidFlag & ROOM_HIGHMID_VIPROOM) {
+		m_pSettings->m_nVipRoomUnk1 = newSettings.m_nVipRoomUnk1;
+		m_pSettings->m_nVipRoomUnk2 = newSettings.m_nVipRoomUnk2;
+	}
+
 	if (newSettings.highFlag & ROOM_HIGH_UNK77) {
 		m_pSettings->unk77 = newSettings.unk77;
 	}
@@ -589,14 +607,16 @@ void CRoom::OnUserMessage(CReceivePacket* msg, IUser* user)
 			{
 				if (isNumber(results[1]))
 				{
+					//	unused
+
 					int voxelFlag = 0;
 					m_pSettings->gameModeId = stoi(results[1]);
 
-					if (m_pSettings->gameModeId == 38 && m_pSettings->mapId == 254)
-					{
-						voxelFlag = ROOM_LOWMID_VOXEL;
-						m_pSettings->voxel_creator_username = user->GetUsername();
-					}
+					//if (m_pSettings->gameModeId == 38 && m_pSettings->mapId == 254)
+					//{
+					//	voxelFlag = ROOM_LOWMID_VOXEL;
+					//	m_pSettings->voxel_creator_username = user->GetUsername();
+					//}
 
 					for (auto u : m_Users) // send gamemode update to all users
 					{
@@ -818,7 +838,7 @@ void CRoom::SendReadyStatusToAll(IUser* user)
 
 void CRoom::SendNewUser(IUser* user, IUser* newUser)
 {
-	g_PacketManager.SendRoomPlayerJoin(user->GetExtendedSocket(), newUser, newUser->GetRoomData()->m_Team);
+	g_PacketManager.SendRoomPlayerJoin(user->GetExtendedSocket(), newUser, RoomTeamNum::CounterTerrorist);
 }
 
 void CRoom::SendUserReadyStatus(IUser* user, IUser* player)
@@ -856,7 +876,7 @@ void CRoom::SendStartMatch(IUser* host)
 		if (m_pServer)
 		{
 			g_PacketManager.SendRoomCreateAndJoin(m_pServer->GetSocket(), this);
-			g_PacketManager.SendHostGameStart(m_pServer->GetSocket(), host->GetID());
+			g_PacketManager.SendHostGameStart(m_pServer->GetSocket(), m_pServer->GetPort());
 		}
 		else
 		{

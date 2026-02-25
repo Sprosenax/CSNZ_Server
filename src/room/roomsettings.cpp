@@ -32,12 +32,13 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 	if (lowFlag & ROOM_LOW_UNK) {
 		unk00 = inPacket.readUInt8();
 	}
-	if (lowFlag & ROOM_LOW_CLANBATTLE) {
-		unk01 = inPacket.readUInt8();
-		unk02 = inPacket.readUInt8();
-		unk03 = inPacket.readUInt8();
-		unk04 = inPacket.readUInt32_LE();
-	}
+	//	unused
+	//if (lowFlag & ROOM_LOW_CLANBATTLE) {
+	//	unk01 = inPacket.readUInt8();
+	//	unk02 = inPacket.readUInt8();
+	//	unk03 = inPacket.readUInt8();
+	//	unk04 = inPacket.readUInt32_LE();
+	//}
 	if (lowFlag & ROOM_LOW_PASSWORD) {
 		password = inPacket.readStr().c_str();
 	}
@@ -124,32 +125,34 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 	if (lowFlag & ROOM_LOW_STATUS) {
 		status = inPacket.readUInt8();
 	}
-	if (lowFlag & ROOM_LOW_UNK33) {
-		unk33 = inPacket.readUInt8();
-		for (int i = 0; i < 2; i++)
-		{
-			unk33_data dat;
-			dat.unk1 = inPacket.readUInt32_LE();
-			dat.unk2 = inPacket.readUInt32_LE();
-			dat.unk3 = inPacket.readUInt8();
-			dat.unk4 = inPacket.readUInt16_LE();
-			dat.unk5 = inPacket.readUInt8();
-			dat.unk6 = inPacket.readUInt8();
-			dat.unk7 = inPacket.readUInt16_LE();
-			dat.unk8 = inPacket.readUInt8();
-			dat.unk9 = inPacket.readUInt8();
+	//	unused
+	//if (lowFlag & ROOM_LOW_UNK33) {
+	//	unk33 = inPacket.readUInt8();
+	//	for (int i = 0; i < 2; i++)
+	//	{
+	//		unk33_data dat;
+	//		dat.unk1 = inPacket.readUInt32_LE();
+	//		dat.unk2 = inPacket.readUInt32_LE();
+	//		dat.unk3 = inPacket.readUInt8();
+	//		dat.unk4 = inPacket.readUInt16_LE();
+	//		dat.unk5 = inPacket.readUInt8();
+	//		dat.unk6 = inPacket.readUInt8();
+	//		dat.unk7 = inPacket.readUInt16_LE();
+	//		dat.unk8 = inPacket.readUInt8();
+	//		dat.unk9 = inPacket.readUInt8();
 
-			unk33_vec.push_back(dat);
-		}
-	}
+	//		unk33_vec.push_back(dat);
+	//	}
+	//}
 
-	if (lowMidFlag & ROOM_LOWMID_UNK34) {
-		unk34 = inPacket.readUInt32_LE();
-		unk35 = inPacket.readStr();
-		unk36 = inPacket.readUInt8();
-		unk37 = inPacket.readUInt8();
-		unk38 = inPacket.readUInt8();
-	}
+	//	unused
+	//if (lowMidFlag & ROOM_LOWMID_UNK34) {
+	//	unk34 = inPacket.readUInt32_LE();
+	//	unk35 = inPacket.readStr();
+	//	unk36 = inPacket.readUInt8();
+	//	unk37 = inPacket.readUInt8();
+	//	unk38 = inPacket.readUInt8();
+	//}
 	if (lowMidFlag & ROOM_LOWMID_C4TIMER) {
 		c4Timer = inPacket.readUInt8();
 	}
@@ -183,8 +186,8 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 		for (int i = 0; i < mapPlaylistSize; i++)
 		{
 			mapPlaylist_data dat;
-			dat.unk1 = inPacket.readUInt8();
-			dat.mapId = inPacket.readUInt16_LE();
+			dat.unk1 = inPacket.readUInt16_LE();
+			dat.mapId = inPacket.readUInt8();
 
 			mapPlaylist.push_back(dat);
 		}
@@ -199,7 +202,7 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 		sd = inPacket.readUInt8();
 	}
 	if (lowMidFlag & ROOM_LOWMID_ZSDIFFICULTY) {
-		zsDifficulty = inPacket.readUInt8();
+		zsDifficulty = inPacket.readInt16_LE();
 		unk56 = inPacket.readUInt32_LE();
 		unk57 = inPacket.readUInt32_LE();
 	}
@@ -219,86 +222,87 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 			zbLimit.push_back(inPacket.readUInt32_LE());
 		}
 	}
-	if (lowMidFlag & ROOM_LOWMID_VOXEL) {
-		voxelFlag = inPacket.readUInt32_LE();
-		if (voxelFlag & VOXELFLAG_ID) {
-			voxel_id = inPacket.readStr().c_str();
-		}
-		if (voxelFlag & VOXELFLAG_RESOURCEID) {
-			voxel_resource_id = inPacket.readStr().c_str();
-		}
-		if (voxelFlag & VOXELFLAG_RESOURCEMAXPLAYER) {
-			voxel_resource_max_player = inPacket.readUInt8();
-		}
-		if (voxelFlag & VOXELFLAG_TITLE) {
-			voxel_title = inPacket.readStr().c_str();
-		}
-		if (voxelFlag & VOXELFLAG_RESOURCEMODE) {
-			voxel_resource_mode = inPacket.readUInt8();
-		}
-		if (voxelFlag & VOXELFLAG_PERMISSION) {
-			voxel_permission = inPacket.readUInt8();
-		}
-		if (voxelFlag & VOXELFLAG_DESCRIPTION) {
-			voxel_description = inPacket.readStr().c_str();
-		}
-		if (voxelFlag & VOXELFLAG_PARENTSSLOTID) {
-			voxel_parents_slot_id = inPacket.readStr().c_str();
-		}
-		if (voxelFlag & VOXELFLAG_IMAGEID) {
-			voxel_image_id = inPacket.readStr().c_str();
-		}
-		if (voxelFlag & VOXELFLAG_CREATORNICKNAME) {
-			voxel_creator_nickname = inPacket.readStr().c_str();
-		}
-		if (voxelFlag & VOXELFLAG_CREATORUSERNAME) {
-			voxel_creator_username = inPacket.readStr().c_str();
-		}
-		if (voxelFlag & VOXELFLAG_LIKECOUNT) {
-			voxel_like_count = inPacket.readUInt32_LE();
-		}
-		if (voxelFlag & VOXELFLAG_PLAYCOUNT) {
-			voxel_play_count = inPacket.readUInt32_LE();
-		}
-		if (voxelFlag & VOXELFLAG_BOOKMARKCOUNT) {
-			voxel_bookmark_count = inPacket.readUInt32_LE();
-		}
-		if (voxelFlag & VOXELFLAG_UNK15) {
-			voxel_unk15_size = inPacket.readUInt32_LE();
-			for (int i = 0; i < voxel_unk15_size; i++)
-			{
-				voxel_15_data dat;
-				dat.unk1 = inPacket.readUInt32_LE();
-				dat.unk2 = inPacket.readStr().c_str();
+	//	unused
+	//if (lowMidFlag & ROOM_LOWMID_VOXEL) {
+	//	voxelFlag = inPacket.readUInt32_LE();
+	//	if (voxelFlag & VOXELFLAG_ID) {
+	//		voxel_id = inPacket.readStr().c_str();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_RESOURCEID) {
+	//		voxel_resource_id = inPacket.readStr().c_str();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_RESOURCEMAXPLAYER) {
+	//		voxel_resource_max_player = inPacket.readUInt8();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_TITLE) {
+	//		voxel_title = inPacket.readStr().c_str();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_RESOURCEMODE) {
+	//		voxel_resource_mode = inPacket.readUInt8();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_PERMISSION) {
+	//		voxel_permission = inPacket.readUInt8();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_DESCRIPTION) {
+	//		voxel_description = inPacket.readStr().c_str();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_PARENTSSLOTID) {
+	//		voxel_parents_slot_id = inPacket.readStr().c_str();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_IMAGEID) {
+	//		voxel_image_id = inPacket.readStr().c_str();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_CREATORNICKNAME) {
+	//		voxel_creator_nickname = inPacket.readStr().c_str();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_CREATORUSERNAME) {
+	//		voxel_creator_username = inPacket.readStr().c_str();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_LIKECOUNT) {
+	//		voxel_like_count = inPacket.readUInt32_LE();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_PLAYCOUNT) {
+	//		voxel_play_count = inPacket.readUInt32_LE();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_BOOKMARKCOUNT) {
+	//		voxel_bookmark_count = inPacket.readUInt32_LE();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_UNK15) {
+	//		voxel_unk15_size = inPacket.readUInt32_LE();
+	//		for (int i = 0; i < voxel_unk15_size; i++)
+	//		{
+	//			voxel_15_data dat;
+	//			dat.unk1 = inPacket.readUInt32_LE();
+	//			dat.unk2 = inPacket.readStr().c_str();
 
-				voxel_unk15_vec.push_back(dat);
-			}
-		}
-		if (voxelFlag & VOXELFLAG_CUBECOUNT) {
-			voxel_cube_count = inPacket.readUInt32_LE();
-		}
-		if (voxelFlag & VOXELFLAG_UNK17) {
-			voxel_unk17 = inPacket.readUInt32_LE();
-		}
-		if (voxelFlag & VOXELFLAG_UNK18) {
-			voxel_unk18 = inPacket.readUInt32_LE();
-		}
-		if (voxelFlag & VOXELFLAG_SLOTCATEGORY) {
-			voxel_slot_category = inPacket.readUInt8();
-		}
-		if (voxelFlag & VOXELFLAG_SANDBOXSCRIPT) {
-			voxel_sandbox_script = inPacket.readUInt8();
-		}
-		if (voxelFlag & VOXELFLAG_SAVEGROUPID) {
-			voxel_savegroup_id = inPacket.readStr().c_str();
-		}
-		if (voxelFlag & VOXELFLAG_UNK22) {
-			voxel_unk22 = inPacket.readUInt8();
-		}
-		if (voxelFlag & VOXELFLAG_UNK23) {
-			voxel_unk23 = inPacket.readUInt8();
-		}
-	}
+	//			voxel_unk15_vec.push_back(dat);
+	//		}
+	//	}
+	//	if (voxelFlag & VOXELFLAG_CUBECOUNT) {
+	//		voxel_cube_count = inPacket.readUInt32_LE();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_UNK17) {
+	//		voxel_unk17 = inPacket.readUInt32_LE();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_UNK18) {
+	//		voxel_unk18 = inPacket.readUInt32_LE();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_SLOTCATEGORY) {
+	//		voxel_slot_category = inPacket.readUInt8();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_SANDBOXSCRIPT) {
+	//		voxel_sandbox_script = inPacket.readUInt8();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_SAVEGROUPID) {
+	//		voxel_savegroup_id = inPacket.readStr().c_str();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_UNK22) {
+	//		voxel_unk22 = inPacket.readUInt8();
+	//	}
+	//	if (voxelFlag & VOXELFLAG_UNK23) {
+	//		voxel_unk23 = inPacket.readUInt8();
+	//	}
+	//}
 	if (lowMidFlag & ROOM_LOWMID_UNK63) {
 		unk63 = inPacket.readUInt8();
 		for (int i = 0; i < unk63; i++)
@@ -373,6 +377,20 @@ CRoomSettings::CRoomSettings(Buffer& inPacket) // unfinished
 		unk79_2 = inPacket.readStr();
 		unk79_3 = inPacket.readStr();
 		unk79_4 = inPacket.readInt32_LE();
+	}
+
+	if (highMidFlag & ROOM_HIGHMID_ZSSPEEDRUN) {
+		m_bIsZSSpeedRun = inPacket.readUInt8();
+	}
+	if (highMidFlag & ROOM_HIGHMID_CHANGESHOT) {
+		m_bIsChangeShot = inPacket.readUInt8();
+	}
+	if (highMidFlag & ROOM_HIGHMID_ZOMBIEPERMADEATH) {
+		m_nZombiePermaDeath = inPacket.readUInt8();
+	}
+	if (highMidFlag & ROOM_HIGHMID_VIPROOM) {
+		m_nVipRoomUnk1 = inPacket.readUInt8();
+		m_nVipRoomUnk2 = inPacket.readUInt8();
 	}
 
 	if (highFlag & ROOM_HIGH_UNK77) {
@@ -489,6 +507,13 @@ void CRoomSettings::Init()
 	mutationRestrict = 0;
 	mutationLimit = 0;
 	unk77 = 0; // high flag
+
+	m_bIsZSSpeedRun = 0;
+	m_bIsChangeShot = 0;
+	m_nZombiePermaDeath = 0;
+	m_nVipRoomUnk1 = 0;
+	m_nVipRoomUnk2 = 0;
+
 	floatingDamageSkin = 0; // high mid flag
 	playerOneTeam = 0;
 	weaponRestrict = 0;
@@ -1289,6 +1314,13 @@ void CRoomSettings::LoadDefaultSettings(int gameModeId, int mapId)
 	mutationRestrictList.clear();
 	mutationLimit = gameModeId == 45 ? 40 : 0;
 	unk77 = 0;
+
+	m_bIsZSSpeedRun = 0;
+	m_bIsChangeShot = 0;
+	m_nZombiePermaDeath = 0;
+	m_nVipRoomUnk1 = 0;
+	m_nVipRoomUnk2 = 0;
+
 	floatingDamageSkin = gameModeId == 0 ? 0 : 1;
 	playerOneTeam = (gameModeId == 3 || gameModeId == 5) ? 1 : 0;
 	weaponRestrict = GetMapDefaultWeaponRestrict(mapId);
@@ -1316,6 +1348,7 @@ void CRoomSettings::LoadDefaultSettings(int gameModeId, int mapId)
 	unk79_3 = "";
 	unk79_4 = 0;
 
+	//	voxel unused
 	if (mapId != 254) // Not studio mode
 		lowMidFlag &= ~ROOM_LOWMID_VOXEL;
 }
@@ -1481,8 +1514,9 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 		if (lowFlag & ROOM_LOW_UNK)
 			lowFlag &= ~ROOM_LOW_UNK;
 
-		if (lowFlag & ROOM_LOW_CLANBATTLE)
-			lowFlag &= ~ROOM_LOW_CLANBATTLE;
+		//	unused
+		//if (lowFlag & ROOM_LOW_CLANBATTLE)
+		//	lowFlag &= ~ROOM_LOW_CLANBATTLE;
 
 		if (lowFlag & ROOM_LOW_LEVELLIMIT)
 			lowFlag &= ~ROOM_LOW_LEVELLIMIT;
@@ -1538,11 +1572,13 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 		if (lowFlag & ROOM_LOW_STATUS)
 			lowFlag &= ~ROOM_LOW_STATUS;
 
-		if (lowFlag & ROOM_LOW_UNK33)
-			lowFlag &= ~ROOM_LOW_UNK33;
+		//	unused
+		//if (lowFlag & ROOM_LOW_UNK33)
+		//	lowFlag &= ~ROOM_LOW_UNK33;
 
-		if (lowMidFlag & ROOM_LOWMID_UNK34)
-			lowMidFlag &= ~ROOM_LOWMID_UNK34;
+		//	unused
+		//if (lowMidFlag & ROOM_LOWMID_UNK34)
+		//	lowMidFlag &= ~ROOM_LOWMID_UNK34;
 
 		if (lowMidFlag & ROOM_LOWMID_KDRULE)
 			kdRule = kdRule ? 1 : 0;
@@ -1565,6 +1601,7 @@ void CRoomSettings::LoadNewSettings(int gameModeId, int mapId, IUser* user)
 		if (lowMidFlag & ROOM_LOWMID_MAPID2)
 			lowMidFlag &= ~ROOM_LOWMID_MAPID2;
 
+		//	voxel unused
 		if (mapId != 254) // Not studio mode
 			lowMidFlag &= ~ROOM_LOWMID_VOXEL;
 
