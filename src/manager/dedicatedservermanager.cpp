@@ -88,21 +88,17 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 			return true;
 		}
 
-		// Dump raw packet bytes to determine exact format from hlds
-		{
-			auto& buf = msg->GetData();
-			std::string hexdump;
-			char tmp[8];
-			for (size_t i = 0; i < buf.buffer.size(); i++) {
-				snprintf(tmp, sizeof(tmp), "%02X ", (unsigned char)buf.buffer[i]);
-				hexdump += tmp;
-			}
-			Logger().Warn("AddServer raw bytes (%zu): %s\n", buf.buffer.size(), hexdump.c_str());
-		}
-
-		int port = msg->ReadUInt16(); // hlds sends port in little-endian
+		// Read port as raw uint16 and log both LE and BE interpretations to determine what hlds sends
+		unsigned short portRaw = (unsigned short)msg->ReadUInt16();
 		int ip = msg->ReadUInt32(true); // ip from -hostip dedi argument
-		Logger().Warn("AddServer parsed: port=%d ip=%d\n", port, ip);
+
+		Logger().Warn("AddServer: portRaw=%u portAsLE=%u portAsBE=%u ip=%d\n",
+			(unsigned int)portRaw,
+			(unsigned int)portRaw,           // already stored as LE by ReadUInt16()
+			(unsigned int)ntohs(portRaw),    // interpret as if it were big-endian
+			ip);
+
+		int port = portRaw; // keep as-is for now; adjust after seeing the log
 
 		// if IP is not specified by dedi server, use IP from socket
 		if (ip == 0)
