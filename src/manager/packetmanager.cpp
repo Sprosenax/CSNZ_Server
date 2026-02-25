@@ -3367,6 +3367,7 @@ void CPacketManager::SendHostServerJoin(IExtendedSocket* socket, int ipAddress, 
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
 	msg->WriteUInt8(HostPacketType::HostServerJoin);
+	Logger().Warn("SendHostServerJoin: ipAddress=%d (%s) port=%d userId=%d\n", ipAddress, ip_to_string(ipAddress).c_str(), port, userId);
 	// Decoder (sub_2590D80 case 5):
 	// 1. sub_26A0450 reads a null-terminated IP string → resolved to a1+32
 	// 2. ReadUInt32 → fallback raw IP (used if string lookup fails) → a1+32
