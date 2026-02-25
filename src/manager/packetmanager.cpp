@@ -3362,22 +3362,23 @@ void CPacketManager::SendHostOnItemUse(IExtendedSocket* socket, int userId, int 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostServerJoin(IExtendedSocket* socket, int ipAddress, int port, int userId)
+void CPacketManager::SendHostServerJoin(IExtendedSocket* socket, const std::string& ipString, int port, int userId)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
 	msg->WriteUInt8(HostPacketType::HostServerJoin);
-	Logger().Warn("SendHostServerJoin: ipAddress=%d (%s) port=%d userId=%d\n", ipAddress, ip_to_string(ipAddress).c_str(), port, userId);
-	// Decoder (sub_2590D80 case 5):
-	// 1. sub_26A0450 reads a null-terminated IP string → resolved to a1+32
-	// 2. ReadUInt32 → fallback raw IP (used if string lookup fails) → a1+32
-	// 3. ReadUInt16 → port → a1+36
-	// 4. Read 8 bytes (float + uint32) → a1+40, a1+44 (gamemode/map)
-	msg->WriteString(ip_to_string(ipAddress)); // IP as "x.x.x.x\0"
-	msg->WriteUInt32(htonl(ipAddress));        // fallback raw IP (network byte order for inet_ntoa)
-	msg->WriteUInt16(port);                    // port
-	msg->WriteUInt32(0);                       // gamemode placeholder → a1+40
-	msg->WriteUInt32(0);                       // map placeholder → a1+44
+	Logger().Warn("SendHostServerJoin: ip=%s port=%d userId=%d\n", ipString.c_str(), port, userId);
+	// Client decoder (sub_2590D80 case 5):
+	// 1. ReadString -> inet_addr(str) -> stored as network-order uint32 at a1+32
+	// 2. ReadUInt32 -> fallback raw IP (network byte order) -> a1+32 if string fails
+	// 3. ReadUInt16 -> port -> a1+36
+	// 4. ReadFloat+UInt32 (8 bytes) -> gamemode/map -> a1+40, a1+44
+	uint32_t rawIP = (uint32_t)inet_addr(ipString.c_str()); // network byte order
+	msg->WriteString(ipString);              // IP string "x.x.x.x"
+	msg->WriteUInt32(rawIP, false);          // fallback raw IP, big-endian (network order)
+	msg->WriteUInt16(port, false);           // port, big-endian
+	msg->WriteUInt32(0);                     // gamemode placeholder
+	msg->WriteUInt32(0);                     // map placeholder
 	socket->Send(msg);
 }
 
