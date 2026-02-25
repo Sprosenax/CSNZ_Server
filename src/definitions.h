@@ -1492,6 +1492,10 @@ enum UserSurveyAnswerResult
 #define ROOM_HIGHMID_UNK_HM11			(1<<11) // new client (xmmword_2D15058): reads u8
 #define ROOM_HIGHMID_UNK_HM12			(1<<12) // new client (xmmword_2D15068): reads u8
 #define ROOM_HIGHMID_UNK_HM13			(1<<13) // new client (xmmword_2D15078): reads u8+u8
+#define ROOM_HIGHMID_ZSSPEEDRUN			(1<<14)
+#define ROOM_HIGHMID_CHANGESHOT			(1<<15)
+#define ROOM_HIGHMID_ZOMBIEPERMADEATH	(1<<16)
+#define ROOM_HIGHMID_VIPROOM			(1<<17)
 #define ROOM_HIGHMID_ALL				(-1)
 
 // ROOM HIGH FLAGS
