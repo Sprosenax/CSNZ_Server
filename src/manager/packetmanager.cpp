@@ -3373,14 +3373,18 @@ void CPacketManager::SendHostServerJoin(IExtendedSocket* socket, const std::stri
 	// 2. ReadUInt32 -> fallback raw IP (network byte order) -> a1+32 if string fails
 	// 3. ReadUInt16 -> port -> a1+36
 	// 4. ReadFloat+UInt32 (8 bytes) -> gamemode/map -> a1+40, a1+44
-	// inet_addr returns host byte order on Windows, network byte order on Linux
-	// Use inet_pton for consistent network byte order across platforms
+	// Client needs IP in network byte order (big-endian bytes)
+	// inet_pton gives us the bytes directly, so write them as-is
 	struct in_addr addr;
 	inet_pton(AF_INET, ipString.c_str(), &addr);
-	uint32_t rawIP = addr.s_addr; // network byte order
 	msg->WriteString(ipString);              // IP string "x.x.x.x"
-	msg->WriteUInt32(rawIP);                 // fallback raw IP - network byte order, write as LE preserves byte order
-	msg->WriteUInt16(htons(port));           // port - convert to network byte order, write as-is
+	// Write the 4 bytes of the IP address directly (network byte order)
+	const unsigned char* ip_bytes = (const unsigned char*)&addr.s_addr;
+	msg->WriteUInt8(ip_bytes[0]);
+	msg->WriteUInt8(ip_bytes[1]);
+	msg->WriteUInt8(ip_bytes[2]);
+	msg->WriteUInt8(ip_bytes[3]);
+	msg->WriteUInt16(htons(port));           // port - convert to network byte order
 	msg->WriteUInt32(0);                     // gamemode placeholder
 	msg->WriteUInt32(0);                     // map placeholder
 	socket->Send(msg);
