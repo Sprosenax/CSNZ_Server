@@ -856,7 +856,7 @@ void CRoom::SendConnectHost(IUser* user, IUser* host)
 	if (g_pServerConfig->room.connectingMethod)
 	{
 		if (m_pServer)
-			g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), m_pServer->GetSocket()->GetIP(), host->GetNetworkConfig().m_nExternalServerPort, user->GetID());
+			g_PacketManager.SendHostServerJoin(user->GetExtendedSocket(), m_pServer->GetSocket()->GetIP(), 0, user->GetID());
 		else
 			g_PacketManager.SendHostJoin(user->GetExtendedSocket(), host);
 	}
