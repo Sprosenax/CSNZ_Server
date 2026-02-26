@@ -3384,7 +3384,7 @@ void CPacketManager::SendHostServerJoin(IExtendedSocket* socket, const std::stri
 	msg->WriteUInt8(ip_bytes[1]);
 	msg->WriteUInt8(ip_bytes[2]);
 	msg->WriteUInt8(ip_bytes[3]);
-	msg->WriteUInt16(htons(port));           // port - convert to network byte order
+	msg->WriteUInt16(port, true);            // port - write as little endian
 	msg->WriteUInt32(0);                     // gamemode placeholder
 	msg->WriteUInt32(0);                     // map placeholder
 	socket->Send(msg);
