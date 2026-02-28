@@ -156,8 +156,8 @@ public:
 	
 	void SendSearchRoomNotice(IExtendedSocket* socket, IRoom* room, const std::string& invitersGameName, const std::string& inviteMsg);
 
-void SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomInfo);
-void SendRoomPlayerJoin(IExtendedSocket* socket, IUser* user, RoomTeamNum num);
+	void SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomInfo);
+	void SendRoomPlayerJoin(IExtendedSocket* socket, IUser* user, RoomTeamNum num);
 	void SendRoomUpdateSettings(IExtendedSocket* socket, CRoomSettings* newSettings, int low = 0, int lowMid = 0, int highMid = 0, int high = 0);
 	void SendRoomSetUserTeam(IExtendedSocket* socket, IUser* user, int teamNum);
 	void SendRoomSetPlayerReady(IExtendedSocket* socket, IUser* user, RoomReadyStatus readyStatus);
@@ -176,8 +176,8 @@ void SendRoomPlayerJoin(IExtendedSocket* socket, IUser* user, RoomTeamNum num);
 	void SendVoxelRoomList(IExtendedSocket* socket, const std::vector<IRoom*>& rooms);
 
 	void SendHostOnItemUse(IExtendedSocket* socket, int userId, int itemId);
-void SendHostServerJoin(IExtendedSocket* socket, int ipAddress, int port, int userId);
-void SendHostStop(IExtendedSocket* socket);
+	void SendHostServerJoin(IExtendedSocket* socket, int ipAddress, int port, int userId);
+	void SendHostStop(IExtendedSocket* socket);
 	void SendHostLeaveResultWindow(IExtendedSocket* socket);
 	void SendHostUserInventory(IExtendedSocket* socket, int userId, const std::vector<CUserInventoryItem>& items);
 	void SendHostGameStart(IExtendedSocket* socket, int userId);
@@ -285,17 +285,6 @@ void SendHostStop(IExtendedSocket* socket);
 	void SendVoxelUnk47(IExtendedSocket* socket);
 	void SendVoxelUnk58(IExtendedSocket* socket);
 
-	void SendUserStartStep(IExtendedSocket* socket);
-	void SendClanTotalWar(IExtendedSocket* socket, int subtype);
-	void SendExpedition(IExtendedSocket* socket, int subtype);
-	void SendVipSystem(IExtendedSocket* socket, int subtype, const UserVip& vip = UserVip());
-	void SendScenarioTX(IExtendedSocket* socket, int subtype);
-	void SendRibbonSystem(IExtendedSocket* socket, int subtype);
-	void SendHonorShop(IExtendedSocket* socket, int subtype);
-	void SendMileageShop(IExtendedSocket* socket, int subtype);
-	void SendQuestBadgeShop(IExtendedSocket* socket, int subtype);
-	void SendRecommendedRooms(IExtendedSocket* socket);
-
 private:
 	CBinMetadata* LoadBinaryMetadata(const char* fileName, bool zip = false);
 
@@ -315,8 +304,10 @@ private:
 	CBinMetadata* m_pZBCompetitiveZip;
 	CBinMetadata* m_pPPSystemZip;
 	CBinMetadata* m_pItemZip;
+
 	CBinMetadata* m_pItemZipPart1;
 	CBinMetadata* m_pItemZipPart2;
+
 	CBinMetadata* m_pCodisDataZip;
 	CBinMetadata* m_pWeaponPropZip;
 	CBinMetadata* m_pReinforceItemsExp;
@@ -333,7 +324,8 @@ private:
 	CBinMetadata* m_pFamilyTotalWarZip;
 	CBinMetadata* m_pUnk54;
 	CBinMetadata* m_pUnk55;
-    CBinMetadata* m_pUnk4;
+
+	CBinMetadata* m_pUnk4;
 	CBinMetadata* m_pUnk56;
 	CBinMetadata* m_pUnk57;
 	CBinMetadata* m_pUnk58;
