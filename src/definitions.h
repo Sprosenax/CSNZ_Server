@@ -1399,7 +1399,7 @@ enum UserSurveyAnswerResult
 // ROOM LOW FLAGS
 #define	ROOM_LOW_ROOMNAME				(1<<0)
 #define	ROOM_LOW_UNK					(1<<1)
-#define	ROOM_LOW_CLANBATTLE				(1<<2)
+//#define	ROOM_LOW_CLANBATTLE				(1<<2)		//	unused
 #define	ROOM_LOW_PASSWORD				(1<<3)
 #define	ROOM_LOW_LEVELLIMIT				(1<<4)
 #define	ROOM_LOW_UNK7					(1<<5)
@@ -1428,11 +1428,11 @@ enum UserSurveyAnswerResult
 #define ROOM_LOW_VIEWFLAG				(1<<28)
 #define ROOM_LOW_VOICECHAT				(1<<29)
 #define ROOM_LOW_STATUS					(1<<30)
-#define ROOM_LOW_UNK33					(1<<31)
+//#define ROOM_LOW_UNK33					(1<<31)		//	unused
 #define ROOM_LOW_ALL					(-1)
 
 // ROOM LOW-MID FLAGS
-#define	ROOM_LOWMID_UNK34				(1<<0)
+//#define	ROOM_LOWMID_UNK34				(1<<0)		//	unused
 #define	ROOM_LOWMID_C4TIMER				(1<<1)
 #define	ROOM_LOWMID_BOT					(1<<2)
 #define	ROOM_LOWMID_KDRULE				(1<<3)
@@ -1450,7 +1450,7 @@ enum UserSurveyAnswerResult
 #define ROOM_LOWMID_MANNERLIMIT			(1<<15)
 #define ROOM_LOWMID_MAPID2				(1<<16)
 #define ROOM_LOWMID_ZBLIMIT				(1<<17)
-#define ROOM_LOWMID_VOXEL				(1<<18)
+#define ROOM_LOWMID_VOXEL				(1<<18)		//	unused
 #define ROOM_LOWMID_UNK63				(1<<20)
 #define ROOM_LOWMID_UNK64				(1<<21)
 #define ROOM_LOWMID_TEAMSWITCH			(1<<22)
@@ -1475,6 +1475,12 @@ enum UserSurveyAnswerResult
 #define ROOM_HIGHMID_WEAPONBUYCOOLTIME	(1<<7)
 #define ROOM_HIGHMID_ZBREBALANCE		(1<<8)
 #define ROOM_HIGHMID_UNK79				(1<<9)
+
+#define ROOM_HIGHMID_ZSSPEEDRUN				(1<<10)
+#define ROOM_HIGHMID_CHANGESHOT				(1<<11)
+#define ROOM_HIGHMID_ZOMBIEPERMADEATH				(1<<12)
+#define ROOM_HIGHMID_VIPROOM				(1<<13)
+
 #define ROOM_HIGHMID_ALL				(-1)
 
 // ROOM HIGH FLAGS
@@ -1530,6 +1536,12 @@ enum UserSurveyAnswerResult
 #define RLHFLAG_FAMILYBATTLECLANIDS	(1<<14)
 #define RLHFLAG_WEAPONBUYCOOLTIME	(1<<15)
 #define RLHFLAG_ZBREBALANCE			(1<<16)
+
+#define RLHFLAG_UNK17			(1<<17)
+#define RLHFLAG_UNK18			(1<<18)
+#define RLHFLAG_UNK19			(1<<19)
+#define RLHFLAG_UNK20			(1<<20)
+
 #define RLHFLAG_ALL					(-1)
 
 // inventory related
