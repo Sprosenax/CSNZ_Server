@@ -315,6 +315,10 @@ private:
 	CBinMetadata* m_pZBCompetitiveZip;
 	CBinMetadata* m_pPPSystemZip;
 	CBinMetadata* m_pItemZip;
+
+	CBinMetadata* m_pItemZipPart1;
+	CBinMetadata* m_pItemZipPart2;
+
 	CBinMetadata* m_pCodisDataZip;
 	CBinMetadata* m_pWeaponPropZip;
 	CBinMetadata* m_pReinforceItemsExp;
@@ -331,6 +335,13 @@ private:
 	CBinMetadata* m_pFamilyTotalWarZip;
 	CBinMetadata* m_pUnk54;
 	CBinMetadata* m_pUnk55;
+
+	CBinMetadata* m_pUnk4;
+	CBinMetadata* m_pUnk56;
+	CBinMetadata* m_pUnk57;
+	CBinMetadata* m_pUnk58;
+	CBinMetadata* m_pUnk63;
+	CBinMetadata* m_pUnk255;
 };
 
 extern CPacketManager g_PacketManager;
