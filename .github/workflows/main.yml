@@ -15,14 +15,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        submodules: recursive  # Important - this project uses git submodules!
-    
-    - name: Setup MSVC
-      uses: microsoft/setup-msbuild@v2
-    
+        submodules: recursive
+
+    - name: Setup MSVC environment
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x86
+
     - name: Setup CMake
       uses: lukka/get-cmake@latest
-    
+
     - name: Check project structure
       run: |
         echo "=== Root directory ==="
@@ -36,13 +38,11 @@ jobs:
           Get-ChildItem src/thirdparty | Select-Object Name
         }
       shell: pwsh
-    
-    - name: Configure CMake
+
+    - name: Configure CMake (Release)
       run: |
-        # CMakeLists.txt is in src/ directory
-        # Disable code quality checks (cppcheck, cpplint) for CI builds
-        # BUILD_TESTING=OFF skips the test/net sub-project that fails to compile
-        cmake -S src -B build -G "Visual Studio 17 2022" -A Win32 `
+        cmake -S src -B build/release -G "Ninja" `
+          -DCMAKE_BUILD_TYPE=Release `
           -DSERVER_USE_GUI=OFF `
           -DSERVER_PUBLIC=OFF `
           -DSERVER_PROTECTION=OFF `
@@ -53,47 +53,62 @@ jobs:
           -DSQLITECPP_RUN_DOXYGEN=OFF `
           -DBUILD_TESTING=OFF
       shell: pwsh
-    
-    - name: Build with CMake (Release)
+
+    - name: Build Release
       run: |
-        cmake --build build --config Release --target CSNZ_Server -j 4
+        cmake --build build/release -j 4
       shell: pwsh
-    
-    - name: Build with CMake (Debug)
+
+    - name: Configure CMake (Debug)
       run: |
-        cmake --build build --config Debug --target CSNZ_Server -j 4
+        cmake -S src -B build/debug -G "Ninja" `
+          -DCMAKE_BUILD_TYPE=Debug `
+          -DSERVER_USE_GUI=OFF `
+          -DSERVER_PUBLIC=OFF `
+          -DSERVER_PROTECTION=OFF `
+          -DSERVER_DBSQLITE=ON `
+          -DSERVER_DB_PROXY=OFF `
+          -DSQLITECPP_RUN_CPPCHECK=OFF `
+          -DSQLITECPP_RUN_CPPLINT=OFF `
+          -DSQLITECPP_RUN_DOXYGEN=OFF `
+          -DBUILD_TESTING=OFF
       shell: pwsh
       continue-on-error: true
-    
+
+    - name: Build Debug
+      run: |
+        cmake --build build/debug -j 4
+      shell: pwsh
+      continue-on-error: true
+
     - name: Find built files
       run: |
         echo "=== Built executables ==="
         Get-ChildItem -Recurse -Include *.exe,*.dll | Where-Object {
           $_.FullName -like "*bin*" -or 
-          $_.FullName -like "*build*Release*" -or
-          $_.FullName -like "*build*Debug*"
+          $_.FullName -like "*build*"
         } | ForEach-Object {
           echo "Found: $($_.FullName) - $([math]::Round($_.Length/1KB, 2)) KB"
         }
       shell: pwsh
-    
+
     - name: Collect output files
       run: |
         New-Item -ItemType Directory -Force -Path "output"
         
-        # The executable should be in bin/ directory (set by CMakeLists.txt)
+        # Check bin/ directory (set by CMakeLists.txt)
         if (Test-Path "bin") {
-          echo "=== Copying from bin/ directory ==="
+          echo "=== Copying from bin/ ==="
           Get-ChildItem -Path bin -Include *.exe,*.dll -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
             Copy-Item $_.FullName -Destination "output\" -Force
             echo "Copied: $($_.Name) - $([math]::Round($_.Length/1KB, 2)) KB"
           }
         }
-        
-        # Also check build output directories
-        if (Test-Path "build/Release") {
-          echo "`n=== Copying from build/Release ==="
-          Get-ChildItem -Path build/Release -Include *.exe,*.dll -ErrorAction SilentlyContinue | ForEach-Object {
+
+        # Check Ninja build output
+        if (Test-Path "build/release") {
+          echo "`n=== Copying from build/release ==="
+          Get-ChildItem -Path build/release -Include *.exe,*.dll -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
             $dest = "output\$($_.Name)"
             if (-not (Test-Path $dest)) {
               Copy-Item $_.FullName -Destination "output\" -Force
@@ -101,37 +116,30 @@ jobs:
             }
           }
         }
-        
+
         echo "`n=== Final output directory ==="
-        if (Test-Path "output") {
-          Get-ChildItem output | ForEach-Object {
-            echo "$($_.Name) - $([math]::Round($_.Length/1KB, 2)) KB"
-          }
+        Get-ChildItem output -ErrorAction SilentlyContinue | ForEach-Object {
+          echo "$($_.Name) - $([math]::Round($_.Length/1KB, 2)) KB"
         }
       shell: pwsh
-    
+
     - name: Upload Release Build
       uses: actions/upload-artifact@v4
       with:
         name: CSNZ-Server-Release
         path: output/*
         if-no-files-found: error
-    
+
     - name: Build Summary
       run: |
         echo "=== Build Summary ==="
-        if (Test-Path "output") {
-          $files = Get-ChildItem "output" -ErrorAction SilentlyContinue
-          if ($files.Count -gt 0) {
-            echo "✅ Build successful! Generated files:"
-            $files | ForEach-Object {
-              $size = [math]::Round($_.Length/1KB, 2)
-              echo "  ✓ $($_.Name) - $size KB"
-            }
-          } else {
-            echo "❌ No output files found!"
+        $files = Get-ChildItem "output" -ErrorAction SilentlyContinue
+        if ($files.Count -gt 0) {
+          echo "✅ Build successful! Generated files:"
+          $files | ForEach-Object {
+            echo "  ✓ $($_.Name) - $([math]::Round($_.Length/1KB, 2)) KB"
           }
         } else {
-          echo "❌ Output directory not created!"
+          echo "❌ No output files found!"
         }
       shell: pwsh
