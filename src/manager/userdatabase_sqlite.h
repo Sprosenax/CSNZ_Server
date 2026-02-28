@@ -107,6 +107,9 @@ public:
 	int GetAddons(int userID, std::vector<int>& addons);
 	int SetAddons(int userID, std::vector<int>& addons);
 
+	int GetVip(int userID, UserVip& vip);
+	int UpdateVip(int userID, const UserVip& vip);
+
 	int GetUsersAssociatedWithIP(const std::string& ip, std::vector<CUserData>& userData);
 	int GetUsersAssociatedWithHWID(const std::vector<unsigned char>& hwid, std::vector<CUserData>& userData);
 

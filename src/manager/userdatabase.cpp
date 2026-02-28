@@ -610,6 +610,22 @@ int CUserDatabaseProxy::SetAddons(int userID, vector<int>& addons)
 	return result;
 }
 
+int CUserDatabaseProxy::GetVip(int userID, UserVip& vip)
+{
+	ExecCalcStart();
+	int result = m_pDatabase->GetVip(userID, vip);
+	ExecCalcEnd(__FUNCTION__);
+	return result;
+}
+
+int CUserDatabaseProxy::UpdateVip(int userID, const UserVip& vip)
+{
+	ExecCalcStart();
+	int result = m_pDatabase->UpdateVip(userID, vip);
+	ExecCalcEnd(__FUNCTION__);
+	return result;
+}
+
 int CUserDatabaseProxy::GetUsersAssociatedWithIP(const string& ip, vector<CUserData>& userData)
 {
 	ExecCalcStart();

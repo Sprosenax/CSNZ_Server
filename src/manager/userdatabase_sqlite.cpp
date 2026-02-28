@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define LAST_DB_VERSION 4
+#define LAST_DB_VERSION 5
 
 //#define OBFUSCATE(data) (string)AY_OBFUSCATE_KEY(data, 'F')
 #undef OBFUSCATE
@@ -6283,6 +6283,47 @@ bool CUserDatabaseSQLite::IsHWIDBanned(vector<unsigned char>& hwid)
 	}
 
 	return true;
+}
+
+int CUserDatabaseSQLite::GetVip(int userID, UserVip& vip)
+{
+	try
+	{
+		SQLite::Statement query(m_Database, OBFUSCATE("SELECT vipLevel, vipExp, vipGrade FROM UserVip WHERE userID = ?"));
+		query.bind(1, userID);
+		if (query.executeStep())
+		{
+			vip.vipLevel = query.getColumn(0);
+			vip.vipExp   = query.getColumn(1);
+			vip.vipGrade = query.getColumn(2);
+		}
+		// if no row, vip stays at defaults (0,0,0)
+	}
+	catch (exception& e)
+	{
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::GetVip: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return 0;
+	}
+	return 1;
+}
+
+int CUserDatabaseSQLite::UpdateVip(int userID, const UserVip& vip)
+{
+	try
+	{
+		SQLite::Statement query(m_Database, OBFUSCATE("INSERT OR REPLACE INTO UserVip (userID, vipLevel, vipExp, vipGrade) VALUES (?, ?, ?, ?)"));
+		query.bind(1, userID);
+		query.bind(2, vip.vipLevel);
+		query.bind(3, vip.vipExp);
+		query.bind(4, vip.vipGrade);
+		query.exec();
+	}
+	catch (exception& e)
+	{
+		Logger().Error(OBFUSCATE("CUserDatabaseSQLite::UpdateVip: database internal error: %s, %d\n"), e.what(), m_Database.getErrorCode());
+		return 0;
+	}
+	return 1;
 }
 
 void CUserDatabaseSQLite::CreateTransaction()

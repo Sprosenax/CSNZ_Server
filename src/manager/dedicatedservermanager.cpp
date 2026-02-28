@@ -88,8 +88,17 @@ bool CDedicatedServerManager::OnPacket(CReceivePacket* msg, IExtendedSocket* soc
 			return true;
 		}
 
-		int port = msg->ReadUInt16(); // -port, default is 27015
+		// Read port as raw uint16 and log both LE and BE interpretations to determine what hlds sends
+		unsigned short portRaw = (unsigned short)msg->ReadUInt16();
 		int ip = msg->ReadUInt32(true); // ip from -hostip dedi argument
+
+		Logger().Warn("AddServer: portRaw=%u portAsLE=%u portAsBE=%u ip=%d\n",
+			(unsigned int)portRaw,
+			(unsigned int)portRaw,           // already stored as LE by ReadUInt16()
+			(unsigned int)ntohs(portRaw),    // interpret as if it were big-endian
+			ip);
+
+		int port = portRaw; // keep as-is for now; adjust after seeing the log
 
 		// if IP is not specified by dedi server, use IP from socket
 		if (ip == 0)

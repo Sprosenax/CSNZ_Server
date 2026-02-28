@@ -438,6 +438,13 @@ bool CItemManager::OnItemPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		if (!item.m_nItemID)
 			return false;
 
+		// Crash fix: GetCell throws if itemID not in item table -> server crash.
+		if (g_pItemTable->GetRowIdx(to_string(item.m_nItemID)) < 0)
+		{
+			Logger().Warn("CItemManager::OnItemPacket: itemID %d not found in item table\n", item.m_nItemID);
+			return false;
+		}
+
 		string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
 
 		if (inventoryType == 1 || className == "LobbyBG" || className == "zbRespawnEffect" || className == "CombatInfoItem") // switch status
@@ -1363,6 +1370,14 @@ int CItemManager::UseItem(IUser* user, int slot, int additionalArg, int addition
 		return ITEM_USE_BAD_SLOT;
 	}
 
+	// Crash fix: rapidcsv throws std::out_of_range if itemID is not in item table.
+	// This crashes the server (unhandled exception) for any item missing from Item.csv.
+	if (g_pItemTable->GetRowIdx(to_string(item.m_nItemID)) < 0)
+	{
+		Logger().Warn("CItemManager::UseItem: itemID %d not found in item table\n", item.m_nItemID);
+		return ITEM_USE_WRONG_ITEM;
+	}
+
 	string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
 	string name = g_pItemTable->GetCell<string>("Name", to_string(item.m_nItemID));
 
@@ -1455,6 +1470,16 @@ bool CItemManager::OnItemUse(IUser* user, CUserInventoryItem& item, int count)
 	}
 
 	item.m_nCount -= count;
+
+	// Crash fix: GetCell throws if itemID not in item table -> server crash.
+	if (g_pItemTable->GetRowIdx(to_string(item.m_nItemID)) < 0)
+	{
+		Logger().Warn("CItemManager::OnItemUse: itemID %d not found in item table\n", item.m_nItemID);
+		// skip reward lookup but still process count/remove
+		if (item.m_nCount == 0)
+			RemoveItem(user->GetID(), user, item);
+		return true;
+	}
 
 	int rewardID = g_pItemTable->GetCell<int>("rewardID", to_string(item.m_nItemID));
 	if (rewardID)
@@ -1607,6 +1632,15 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 		}
 	}
 
+	// Crash fix: GetCell throws if itemID not in item table -> server crash.
+	if (g_pItemTable->GetRowIdx(to_string(item.m_nItemID)) < 0)
+	{
+		Logger().Warn("CItemManager::RemoveItem: itemID %d not found in item table\n", item.m_nItemID);
+		// still remove from DB even if not in item table
+	}
+	else
+	{
+
 	string className = g_pItemTable->GetCell<string>("ClassName", to_string(item.m_nItemID));
 	if (className == "LobbyBG")
 	{
@@ -1698,6 +1732,8 @@ bool CItemManager::RemoveItem(int userID, IUser* user, CUserInventoryItem& item)
 			}
 		}
 	}
+
+	} // end of GetRowIdx guard else block
 
 	item.Reset();
 
@@ -2599,6 +2635,13 @@ bool CItemManager::OnWeaponPaintSwitchRequest(IUser* user, CReceivePacket* msg)
 	if (std::find(paintIDs.begin(), paintIDs.end(), paintID) == paintIDs.end())
 		return false;
 
+	// Crash fix: GetCell throws if paintID not in item table -> server crash.
+	if (g_pItemTable->GetRowIdx(to_string(paintID)) < 0)
+	{
+		Logger().Warn("CItemManager::OnWeaponPaintSwitchRequest: paintID %d not found in item table\n", paintID);
+		return false;
+	}
+
 	string paintClassName = g_pItemTable->GetCell<string>("ClassName", to_string(paintID));
 
 	if (paintClassName != "WeaponPaintRemoveItem")
@@ -2680,6 +2723,18 @@ bool CItemManager::OnPartEquipRequest(IUser* user, CReceivePacket* msg)
 		if (!weapon.m_nItemID || !part.m_nItemID)
 			return false;
 
+		// Crash fix: GetCell throws if itemID not in item table -> server crash.
+		if (g_pItemTable->GetRowIdx(to_string(weapon.m_nItemID)) < 0)
+		{
+			Logger().Warn("CItemManager::OnPartEquipRequest: weapon itemID %d not found in item table\n", weapon.m_nItemID);
+			return false;
+		}
+		if (g_pItemTable->GetRowIdx(to_string(part.m_nItemID)) < 0)
+		{
+			Logger().Warn("CItemManager::OnPartEquipRequest: part itemID %d not found in item table\n", part.m_nItemID);
+			return false;
+		}
+
 		int weaponCategory = g_pItemTable->GetCell<int>("Category", to_string(weapon.m_nItemID));
 		int partCategory = g_pItemTable->GetCell<int>("Category", to_string(part.m_nItemID));
 
@@ -2749,9 +2804,7 @@ bool CItemManager::OnSwitchInUseRequest(IUser* user, CReceivePacket* msg)
 
 	item.m_nStatus = updateStatus;
 
-	item.ConvertDurationToExpiryDate();
-
-	g_UserDatabase.UpdateInventoryItem(user->GetID(), item, UITEM_FLAG_INUSE | UITEM_FLAG_STATUS | UITEM_FLAG_EXPIRYDATE);
+	g_UserDatabase.UpdateInventoryItem(user->GetID(), item, UITEM_FLAG_INUSE | UITEM_FLAG_STATUS);
 
 	vector<CUserInventoryItem> items;
 	item.PushItem(items, item);
@@ -2838,6 +2891,13 @@ void CItemManager::OnCostumeEquip(IUser* user, int gameSlot)
 
 	if (!item.m_nItemID)
 		return;
+
+	// Crash fix: GetCell throws if itemID not in item table -> server crash.
+	if (g_pItemTable->GetRowIdx(to_string(item.m_nItemID)) < 0)
+	{
+		Logger().Warn("CItemManager::OnCostumeEquip: itemID %d not found in item table\n", item.m_nItemID);
+		return;
+	}
 
 	vector<CUserInventoryItem> items; // temp vector
 

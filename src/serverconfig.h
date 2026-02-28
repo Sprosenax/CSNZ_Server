@@ -2,6 +2,7 @@
 
 #include "definitions.h"
 #include "nlohmann/json.hpp"
+#include <cstdint>
 
 using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
@@ -48,6 +49,25 @@ public:
 	std::string voxelVxlURL;
 	std::string voxelVmgURL;
 	std::vector<std::string> dedicatedServerWhitelist;
+
+	struct VipTier
+	{
+		std::string name;
+		int pointsRequired;
+		// Case 8 rank privileges data
+		int mileagePayback;         // shown as "Mileage Payback: X"
+		float mileageRate;          // mileage rate multiplier
+		std::vector<int> subItems;  // sub-item IDs (reward box items etc)
+		uint8_t unk24;
+		uint8_t unk25;
+		uint8_t zombieScenario;     // "Clear Easy in Zombie Scenario" flag
+		uint8_t loginSupplies;      // "Login Supplies Login" count
+		uint8_t unk28;
+		uint8_t unk30;
+		uint8_t unk31;
+		uint8_t unk32;
+	};
+	std::vector<VipTier> vipTiers; // index = vipLevel (0=None, 1=Bronze, ..., 7=VVIP)
 };
 
 extern class CServerConfig* g_pServerConfig;

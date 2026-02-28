@@ -349,6 +349,11 @@ bool CUserManager::OnFavoritePacket(CReceivePacket* msg, IExtendedSocket* socket
 		return OnFavoriteSetFastBuy(msg, user); // obsolete
 	case FavoritePacketType::SetLoadout:
 		return OnFavoriteSetLoadout(msg, user);
+	case 3: // new loadout tab switch in updated client
+	{
+		int unk = msg->ReadUInt8();
+		break;
+	}
 	case FavoritePacketType::SetBookmark:
 		return OnFavoriteSetBookmark(msg, user);
 	default:
@@ -454,6 +459,13 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 		if (!g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items))
 			return false;
 
+		// Crash fix: GetCell throws if itemID not in item table -> server crash.
+		if (g_pItemTable->GetRowIdx(to_string(itemID)) < 0)
+		{
+			Logger().Warn("CUserManager::OnFavoriteSetLoadout: itemID %d not found in item table\n", itemID);
+			return false;
+		}
+
 		int category = g_pItemTable->GetCell<int>("Category", to_string(itemID));
 
 		if (category != 11 && (category < 1 || category > 6))
@@ -468,6 +480,13 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 		if (!g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items))
 			return false;
 
+		// Crash fix: GetCell throws if itemID not in item table -> server crash.
+		if (g_pItemTable->GetRowIdx(to_string(itemID)) < 0)
+		{
+			Logger().Warn("CUserManager::OnFavoriteSetLoadout: itemID %d not found in item table\n", itemID);
+			return false;
+		}
+
 		int category = g_pItemTable->GetCell<int>("Category", to_string(itemID));
 
 		if (category != 7)
@@ -481,6 +500,55 @@ bool CUserManager::OnFavoriteSetLoadout(CReceivePacket* msg, IUser* user)
 	else
 	{
 		Logger().Warn("CUserManager::OnFavoriteSetLoadout: unknown loadout type: %d\n", loadoutType);
+	}
+
+	return true;
+}
+
+bool CUserManager::OnSwitchConfigPacket(CReceivePacket* msg, IExtendedSocket* socket)
+{
+	LOG_PACKET;
+
+	IUser* user = GetUserBySocket(socket);
+	if (!user)
+		return false;
+
+	// SwitchConfig (packet 184): sent by new client when equipping weapons in inventory.
+	// Replaces/supplements the old Favorite SetLoadout (Favorite packet subtype).
+	// Log all fields until the exact structure is confirmed via IDA.
+	int subtype = msg->ReadUInt8();
+	Logger().Warn("OnSwitchConfigPacket: subtype=%d len=%d\n", subtype, msg->GetLength());
+
+	switch (subtype)
+	{
+	case 0: // switch active config slot
+	{
+		int configID = msg->ReadUInt8();
+		Logger().Info("OnSwitchConfigPacket: switch to config %d\n", configID);
+
+		CUserCharacterExtended character = user->GetCharacterExtended(EXT_UFLAG_CURLOADOUT);
+		if (configID < LOADOUT_COUNT)
+		{
+			character.flag = EXT_UFLAG_CURLOADOUT;
+			character.curLoadout = configID;
+			g_UserDatabase.UpdateCharacterExtended(user->GetID(), character);
+		}
+		break;
+	}
+	case 1: // assign item to slot in current config
+	{
+		int slotID = msg->ReadUInt8();
+		int itemID = msg->ReadUInt16();
+		Logger().Info("OnSwitchConfigPacket: assign itemID=%d to slot=%d\n", itemID, slotID);
+
+		CUserCharacterExtended character = user->GetCharacterExtended(EXT_UFLAG_CURLOADOUT);
+		if (slotID < LOADOUT_SLOT_COUNT && character.curLoadout < LOADOUT_COUNT)
+			g_UserDatabase.UpdateLoadout(user->GetID(), character.curLoadout, slotID, itemID);
+		break;
+	}
+	default:
+		Logger().Warn("OnSwitchConfigPacket: unknown subtype %d\n", subtype);
+		break;
 	}
 
 	return true;
@@ -607,21 +675,29 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 		g_MiniGameManager.SendWeaponReleaseUpdate(user);
 
 	SendUserInventory(user);
+	Logger().Info("After SendUserInventory\n");
 	SendUserLoadout(user);
+	Logger().Info("After SendUserLoadout\n");
 	SendUserNotices(user);
+	Logger().Info("After SendUserNotices\n");
 
 	g_PacketManager.SendShopUpdate(socket, g_ShopManager.GetProducts());
+	Logger().Info("After SendShopUpdate\n");
 	g_PacketManager.SendShopRecommendedProducts(socket, g_ShopManager.GetRecommendedProducts());
+	Logger().Info("After SendShopRecommendedProducts\n");
 	g_PacketManager.SendShopPopularProducts(socket, g_ShopManager.GetPopularProducts());
+	Logger().Info("After SendShopPopularProducts\n");
 
 	// CN: 欢迎来到CSN:S服务器! 我们的服务器是非商业性的, 不要相信任何人说的售卖CSOL私服的信息.\n官方Discord: https://discord.gg/EvUAY6D \n
 	const char* text = OBFUSCATE("EN: Welcome to the CSN:S server! The project is non-commercial. Don't trust people trying to sell you a server.\nServer developer Discord: https://discord.gg/EvUAY6D \n");
 	g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, text);
+	Logger().Info("After SendUMsgNoticeMsgBoxToUuid\n");
 
 	if (!g_pServerConfig->welcomeMessage.empty())
 		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(socket, g_pServerConfig->welcomeMessage);
 
 	g_ChannelManager.JoinChannel(user, g_ChannelManager.channelServers[0]->GetID(), g_ChannelManager.channelServers[0]->GetChannels()[0]->GetID(), false);
+	Logger().Info("After JoinChannel\n");
 
 	for (auto& survey : g_pServerConfig->surveys)
 	{
@@ -630,11 +706,14 @@ void CUserManager::SendLoginPacket(IUser* user, const CUserCharacter& character)
 	}
 
 	g_PacketManager.SendLeaguePacket(socket);
+	Logger().Info("After SendLeaguePacket\n");
 
 	// FROM ~X.03.24: without this packet, client doesn't show inventory and user info on top left, weird
 	g_PacketManager.SendUpdateInfo(socket);
+	Logger().Info("After SendUpdateInfo\n");
 
 	g_PacketManager.SendVoxelURLs(socket, g_pServerConfig->voxelVxlURL, g_pServerConfig->voxelVmgURL);
+	Logger().Info("After SendVoxelURLs\n");
 }
 
 void CUserManager::SendMetadata(IExtendedSocket* socket)
@@ -760,12 +839,32 @@ void CUserManager::SendUserLoadout(IUser* user)
 	vector<int> bookmark;
 	g_UserDatabase.GetBookmark(user->GetID(), bookmark);
 
+	Logger().Info("SendFavoriteLoadout: characterID=%d, curLoadout=%d, loadouts.size()=%d\n",
+		character.characterID, character.curLoadout, (int)loadouts.size());
+	
+	// Log first 3 loadouts to see actual data
+	for (int i = 0; i < (int)loadouts.size() && i < 3; i++) {
+		Logger().Info("  Loadout[%d]: items.size()=%d", i, (int)loadouts[i].items.size());
+		if (loadouts[i].items.size() > 0) {
+			Logger().Info(" [");
+			for (int j = 0; j < (int)loadouts[i].items.size() && j < 4; j++) {
+				Logger().Info("%d", loadouts[i].items[j]);
+				if (j < (int)loadouts[i].items.size() - 1) Logger().Info(", ");
+			}
+			Logger().Info("]");
+		}
+		Logger().Info("\n");
+	}
+	
 	g_PacketManager.SendFavoriteLoadout(user->GetExtendedSocket(), character.characterID, character.curLoadout, loadouts);
+	Logger().Info("After SendFavoriteLoadout\n");
 	//g_PacketManager.SendFavoriteFastBuy(user->GetExtendedSocket(), fastBuy);
 	g_PacketManager.SendFavoriteBuyMenu(user->GetExtendedSocket(), buyMenu);
+	Logger().Info("After SendFavoriteBuyMenu\n");
 	g_PacketManager.SendFavoriteBookmark(user->GetExtendedSocket(), bookmark);
+	Logger().Info("After SendFavoriteBookmark\n");
 }
-
+	
 void CUserManager::SendUserNotices(IUser* user)
 {
 	for (auto& notice : g_pServerConfig->notices)
@@ -895,6 +994,10 @@ bool CUserManager::OnUpdateInfoPacket(CReceivePacket* msg, IExtendedSocket* sock
 
 		if (chatColorID)
 		{
+			// Crash fix: GetCell throws if itemID not in item table -> server crash.
+			if (g_pItemTable->GetRowIdx(to_string(chatColorID)) < 0)
+				return true;
+
 			string resourceName = g_pItemTable->GetCell<string>("recourcename", to_string(chatColorID));
 			if (resourceName.find("chatcolor_") == std::string::npos)
 				return true;
@@ -907,6 +1010,11 @@ bool CUserManager::OnUpdateInfoPacket(CReceivePacket* msg, IExtendedSocket* sock
 		}
 
 		user->UpdateChatColor(chatColorID);
+		break;
+	}
+	case 9: // inventory/craft tab switch - 1 byte tab index, no response needed
+	{
+		int tabIndex = msg->ReadUInt8();
 		break;
 	}
 	case 12: // called when click on inventory button

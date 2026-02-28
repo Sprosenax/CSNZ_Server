@@ -450,6 +450,94 @@ void CServerInstance::OnPackets(IExtendedSocket* s, CReceivePacket* msg)
 	case PacketId::Voxel:
 		g_VoxelManager.OnPacket(msg, s);
 		break;
+	case PacketId::UserStartStep:
+	{
+		g_PacketManager.SendUserStartStep(s);
+		break;
+	}
+	case PacketId::Steam:
+	{
+		// client sends steam friend list info; no response needed
+		break;
+	}
+	case PacketId::ClanTotalWar:
+	{
+		int subtype = msg->ReadUInt8();
+		g_PacketManager.SendClanTotalWar(s, subtype);
+		break;
+	}
+	case PacketId::Expedition:
+	{
+		int subtype = msg->ReadUInt8();
+		g_PacketManager.SendExpedition(s, subtype);
+		break;
+	}
+	case PacketId::VipSystem:
+	{
+		int subtype = msg->ReadUInt8();
+		IUser* user = g_UserManager.GetUserBySocket(s);
+		if (!user) break;
+		UserVip vip;
+		g_UserDatabase.GetVip(user->GetID(), vip);
+		g_PacketManager.SendVipSystem(s, subtype, vip);
+		// Always send rank privileges (8) and bar thresholds (11) alongside subtype 0
+		if (subtype == 0)
+		{
+			g_PacketManager.SendVipSystem(s, 8, vip);
+			g_PacketManager.SendVipSystem(s, 11, vip);
+		}
+		break;
+	}
+	case PacketId::ScenarioTX:
+	{
+		int subtype = msg->ReadUInt8();
+		g_PacketManager.SendScenarioTX(s, subtype);
+		break;
+	}
+	case PacketId::RibbonSystem:
+	{
+		int subtype = msg->ReadUInt8();
+		g_PacketManager.SendRibbonSystem(s, subtype);
+		break;
+	}
+	case PacketId::PopularInfo:
+	{
+		// no response needed
+		break;
+	}
+	case PacketId::Dictionary:
+	{
+		int subtype = msg->ReadUInt8();
+		Logger().Warn("Packet_Dictionary subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		break;
+	}
+	case PacketId::HonorShop:
+	{
+		int subtype = msg->ReadUInt8();
+		g_PacketManager.SendHonorShop(s, subtype);
+		break;
+	}
+	case PacketId::MileageShop:
+	{
+		int subtype = msg->ReadUInt8();
+		g_PacketManager.SendMileageShop(s, subtype);
+		break;
+	}
+	case PacketId::QuestBadgeShop:
+	{
+		int subtype = msg->ReadUInt8();
+		g_PacketManager.SendQuestBadgeShop(s, subtype);
+		break;
+	}
+	case PacketId::Metadata:
+	{
+		int subtype = msg->ReadUInt8();
+		Logger().Warn("Packet_Metadata subtype: %d (len: %d)\n", subtype, msg->GetLength());
+		break;
+	}
+	case PacketId::SwitchConfig:
+		g_UserManager.OnSwitchConfigPacket(msg, s);
+		break;
 	default:
 		Logger().Warn("Unimplemented packet: %d\n", msg->GetID());
 		break;

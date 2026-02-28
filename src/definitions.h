@@ -830,6 +830,7 @@ enum RoomStatus
 #define	UFLAG_LOW_UNK21				(1<<21)
 #define UFLAG_LOW_TITLES			(1<<22)
 #define	UFLAG_LOW_UNK23				(1<<23)
+#define	UFLAG_LOW_UNK24				(1<<24)
 #define	UFLAG_LOW_UNK25				(1<<25)
 #define	UFLAG_LOW_UNK26				(1<<26)
 #define	UFLAG_LOW_UNK27				(1<<27)
@@ -1080,6 +1081,14 @@ class CUserQuestStats
 {
 	int dailyMissionsCompletedToday;
 	int dailyMissionsCleared;
+};
+
+struct UserVip
+{
+	UserVip() : vipLevel(0), vipExp(0), vipGrade(0) {}
+	int vipLevel;
+	int vipExp;
+	int vipGrade;
 };
 
 // UserSession table + some additional info from usercharacter
@@ -1450,18 +1459,22 @@ enum UserSurveyAnswerResult
 #define ROOM_LOWMID_MANNERLIMIT			(1<<15)
 #define ROOM_LOWMID_MAPID2				(1<<16)
 #define ROOM_LOWMID_ZBLIMIT				(1<<17)
-#define ROOM_LOWMID_VOXEL				(1<<18)		//	unused
-#define ROOM_LOWMID_UNK63				(1<<20)
-#define ROOM_LOWMID_UNK64				(1<<21)
-#define ROOM_LOWMID_TEAMSWITCH			(1<<22)
-#define ROOM_LOWMID_ZBRESPAWN			(1<<23)
-#define ROOM_LOWMID_ZBBALANCE			(1<<24)
-#define ROOM_LOWMID_GAMERULE			(1<<25)
-#define ROOM_LOWMID_SUPERROOM			(1<<26)
-#define ROOM_LOWMID_ISZBCOMPETITIVE		(1<<27)
-#define ROOM_LOWMID_ZBAUTOHUNTING		(1<<28)
-#define ROOM_LOWMID_INTEGRATEDTEAM		(1<<29)
-#define ROOM_LOWMID_UNK73				(1<<30)
+#define ROOM_LOWMID_VOXEL				(1<<18)
+#define ROOM_LOWMID_UNK_NEW1			(1<<19)  // new in newer client: uint32 field
+#define ROOM_LOWMID_UNK_NEW2			(1<<20)  // new in newer client: uint8 count + uint16 loop
+#define ROOM_LOWMID_UNK_NEW3			(1<<21)  // new in newer client: uint8 bool
+#define ROOM_LOWMID_UNK63				(1<<22)
+#define ROOM_LOWMID_UNK64				(1<<23)
+#define ROOM_LOWMID_TEAMSWITCH			(1<<24)
+#define ROOM_LOWMID_ZBRESPAWN			(1<<25)
+#define ROOM_LOWMID_ZBBALANCE			(1<<26)
+#define ROOM_LOWMID_GAMERULE			(1<<27)
+#define ROOM_LOWMID_SUPERROOM			(1<<28)
+#define ROOM_LOWMID_ISZBCOMPETITIVE		(1<<29)
+#define ROOM_LOWMID_ZBAUTOHUNTING		(1<<30)
+#define ROOM_LOWMID_INTEGRATEDTEAM		(1<<31)
+// UNK73 was bit30 in old client but overflows with 3 new bits inserted - aliased to 0 (effectively disabled)
+#define ROOM_LOWMID_UNK73				0
 #define ROOM_LOWMID_ALL					(-1)
 
 // ROOM HIGH-MID FLAGS
@@ -1475,12 +1488,14 @@ enum UserSurveyAnswerResult
 #define ROOM_HIGHMID_WEAPONBUYCOOLTIME	(1<<7)
 #define ROOM_HIGHMID_ZBREBALANCE		(1<<8)
 #define ROOM_HIGHMID_UNK79				(1<<9)
-
-#define ROOM_HIGHMID_ZSSPEEDRUN				(1<<10)
-#define ROOM_HIGHMID_CHANGESHOT				(1<<11)
-#define ROOM_HIGHMID_ZOMBIEPERMADEATH				(1<<12)
-#define ROOM_HIGHMID_VIPROOM				(1<<13)
-
+#define ROOM_HIGHMID_UNK_HM10			(1<<10) // new client (xmmword_2D15048): reads u8
+#define ROOM_HIGHMID_UNK_HM11			(1<<11) // new client (xmmword_2D15058): reads u8
+#define ROOM_HIGHMID_UNK_HM12			(1<<12) // new client (xmmword_2D15068): reads u8
+#define ROOM_HIGHMID_UNK_HM13			(1<<13) // new client (xmmword_2D15078): reads u8+u8
+#define ROOM_HIGHMID_ZSSPEEDRUN			(1<<14)
+#define ROOM_HIGHMID_CHANGESHOT			(1<<15)
+#define ROOM_HIGHMID_ZOMBIEPERMADEATH	(1<<16)
+#define ROOM_HIGHMID_VIPROOM			(1<<17)
 #define ROOM_HIGHMID_ALL				(-1)
 
 // ROOM HIGH FLAGS

@@ -76,6 +76,8 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		return OnUserSpawn(msg, socket);
 	case HostPacketType::OnUpdateClass:
 		return OnUpdateClass(msg, room, gameMatch);
+	case HostPacketType::OnRoundStart:
+		return OnRoundStart(msg, socket);
 	case HostPacketType::OnChangeMap:
 		return OnChangeMap(msg, room);
 	case 15:
@@ -131,6 +133,76 @@ bool CHostManager::OnPacket(CReceivePacket* msg, IExtendedSocket* socket)
 		}
 		break;
 	}
+	case 103:
+	{
+		int subtype = msg->ReadUInt8();
+		if (subtype == 0)
+		{
+			// no additional data
+			Logger().Warn("Packet_Host 103-0\n");
+		}
+		else if (subtype == 3)
+		{
+			int unk1 = msg->ReadUInt32();
+			int unk2 = msg->ReadUInt32();
+			Logger().Warn("Packet_Host 103-3: %d, %d\n", unk1, unk2);
+		}
+		else
+		{
+			Logger().Warn("Packet_Host 103 unknown subtype: %d\n", subtype);
+		}
+		break;
+	}
+	case 104:
+	{
+		Logger().Warn("Packet_Host 104 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 105:
+	{
+		Logger().Warn("Packet_Host 105 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 107:
+	{
+		Logger().Warn("Packet_Host 107 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 108:
+	{
+		Logger().Warn("Packet_Host 108 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 109:
+	{
+		Logger().Warn("Packet_Host 109 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 110:
+	{
+		Logger().Warn("Packet_Host 110 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 112:
+	{
+		Logger().Warn("Packet_Host 112 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 113:
+	{
+		Logger().Warn("Packet_Host 113 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 114:
+	{
+		Logger().Warn("Packet_Host 114 (len: %d)\n", msg->GetLength());
+		break;
+	}
+	case 115:
+	{
+		Logger().Warn("Packet_Host 115 (len: %d)\n", msg->GetLength());
+		break;
+	}
 	default:
 		Logger().Warn("Packet_Host type %d is not implemented, len: %d\n", type, msg->GetLength());
 		break;
@@ -176,7 +248,9 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* sock
 			inGameItems.begin(),
 			inGameItems.end(),
 			[](const CUserInventoryItem& item) -> bool {
-				return !(item.m_nItemID && item.m_nInUse && g_pItemTable->GetCell<int>("InGameItem", to_string(item.m_nItemID)));
+				if (!item.m_nItemID || !item.m_nInUse) return true;
+				if (g_pItemTable->GetRowIdx(to_string(item.m_nItemID)) < 0) return true;
+				return !g_pItemTable->GetCell<int>("InGameItem", to_string(item.m_nItemID));
 			}
 		),
 		inGameItems.end()
@@ -188,6 +262,7 @@ bool CHostManager::OnSetUserInventory(CReceivePacket* msg, IExtendedSocket* sock
 			inGameItems.begin(),
 			inGameItems.end(),
 			[](const CUserInventoryItem& item) -> bool {
+				if (g_pItemTable->GetRowIdx(to_string(item.m_nItemID)) < 0) return false;
 				int category = g_pItemTable->GetCell<int>("Category", to_string(item.m_nItemID));
 				return ((category >= 1 && category <= 6 || category == 11) ? !item.m_nStatus : false);
 			}

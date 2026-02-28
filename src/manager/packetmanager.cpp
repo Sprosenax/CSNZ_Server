@@ -1,6 +1,9 @@
 #include "packetmanager.h"
 #include "serverinstance.h"
 #include "channelmanager.h"
+#include "../serverconfig.h"
+
+#include <algorithm>
 
 #include "packet/packethelper_fulluserinfo.h"
 #include "packet/packet_metadata_data.h"
@@ -2794,12 +2797,10 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	if (lowMidFlag & ROOM_LOWMID_ISZBCOMPETITIVE) {
 		msg->WriteUInt8(newSettings->isZbCompetitive);
 	}
-	if (lowMidFlag & ROOM_LOWMID_ZBAUTOHUNTING) {
-		msg->WriteUInt8(newSettings->zbAutoHunting);
-	}
-	if (lowMidFlag & ROOM_LOWMID_INTEGRATEDTEAM) {
-		msg->WriteUInt8(newSettings->integratedTeam);
-	}
+	// lowMid bits 30 (ZBAUTOHUNTING) and 31 (INTEGRATEDTEAM) have no handlers in the
+	// new client (sub_25B92C0). Client skips them; writing bytes here shifts the player list.
+	// if (lowMidFlag & ROOM_LOWMID_ZBAUTOHUNTING) { msg->WriteUInt8(newSettings->zbAutoHunting); }
+	// if (lowMidFlag & ROOM_LOWMID_INTEGRATEDTEAM) { msg->WriteUInt8(newSettings->integratedTeam); }
 	if (lowMidFlag & ROOM_LOWMID_UNK73) {
 		msg->WriteUInt8(newSettings->unk73);
 	}
@@ -2851,6 +2852,20 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 		msg->WriteString(newSettings->unk79_3);
 		msg->WriteUInt32(newSettings->unk79_4);
 	}
+	// highMid bits 10-13: new in this client (xmmwords 2D15048-2D15078)
+	if (highMidFlag & ROOM_HIGHMID_UNK_HM10) {
+		msg->WriteUInt8(0);
+	}
+	if (highMidFlag & ROOM_HIGHMID_UNK_HM11) {
+		msg->WriteUInt8(0);
+	}
+	if (highMidFlag & ROOM_HIGHMID_UNK_HM12) {
+		msg->WriteUInt8(0);
+	}
+	if (highMidFlag & ROOM_HIGHMID_UNK_HM13) {
+		msg->WriteUInt8(0); // two bytes for this one
+		msg->WriteUInt8(0);
+	}
 
 	if (highMidFlag & ROOM_HIGHMID_ZSSPEEDRUN) {
 		msg->WriteUInt8(newSettings->m_bIsZSSpeedRun);
@@ -2871,7 +2886,7 @@ void WriteSettings(CSendPacket* msg, CRoomSettings* newSettings, int low, int lo
 	}
 }
 
-void CPacketManager::SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomInfo)
+void CPacketManager::SendRoomCreateAndJoin(IExtendedSocket* socket, IRoom* roomInfo, bool joining)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
 	msg->BuildHeader();
@@ -3492,6 +3507,10 @@ void CPacketManager::SendDefaultItems(IExtendedSocket* socket, const vector<CUse
 				msg->WriteUInt8(i++);
 				msg->WriteUInt16(0);
 			}
+
+			// new client (2025): two extra uint32s after unk array (v63, v64 in sub_25987F0)
+			msg->WriteUInt32(0);
+			msg->WriteUInt32(0);
 		}
 	}
 	socket->Send(msg);
@@ -3508,14 +3527,31 @@ void CPacketManager::SendHostOnItemUse(IExtendedSocket* socket, int userId, int 
 	socket->Send(msg);
 }
 
-void CPacketManager::SendHostServerJoin(IExtendedSocket* socket, int ipAddress, int port, int userId)
+void CPacketManager::SendHostServerJoin(IExtendedSocket* socket, const std::string& ipString, int port, int userId)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
 	msg->WriteUInt8(HostPacketType::HostServerJoin);
-	msg->WriteUInt32(ipAddress, false);
-	msg->WriteUInt16(port);
-	msg->WriteUInt64(userId);
+	Logger().Warn("SendHostServerJoin: ip=%s port=%d userId=%d\n", ipString.c_str(), port, userId);
+	// Client decoder (sub_2590D80 case 5):
+	// 1. ReadString -> inet_addr(str) -> stored as network-order uint32 at a1+32
+	// 2. ReadUInt32 -> fallback raw IP (network byte order) -> a1+32 if string fails
+	// 3. ReadUInt16 -> port -> a1+36
+	// 4. ReadFloat+UInt32 (8 bytes) -> gamemode/map -> a1+40, a1+44
+	// Client needs IP in network byte order (big-endian bytes)
+	// inet_pton gives us the bytes directly, so write them as-is
+	struct in_addr addr;
+	inet_pton(AF_INET, ipString.c_str(), &addr);
+	msg->WriteString(ipString);              // IP string "x.x.x.x"
+	// Write the 4 bytes of the IP address directly (network byte order)
+	const unsigned char* ip_bytes = (const unsigned char*)&addr.s_addr;
+	msg->WriteUInt8(ip_bytes[0]);
+	msg->WriteUInt8(ip_bytes[1]);
+	msg->WriteUInt8(ip_bytes[2]);
+	msg->WriteUInt8(ip_bytes[3]);
+	msg->WriteUInt16(port);                  // port - write as big endian (client reads BE)
+	msg->WriteUInt32(0);                     // gamemode placeholder
+	msg->WriteUInt32(0);                     // map placeholder
 	socket->Send(msg);
 }
 
@@ -3574,13 +3610,17 @@ void CPacketManager::SendHostGameStart(IExtendedSocket* socket, int userId)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
-
 	msg->WriteUInt8(HostPacketType::GameStart);
-	msg->WriteUInt32(userId);
-	msg->WriteUInt8(0); // server category /// @todo investigate
-	msg->WriteUInt8(0); // enable nexon analytics(it write every step on the map like kill event etc)
-	msg->WriteUInt64(5555); // unk
-
+	// Decoder (sub_2590D80 case 0):
+	// ReadUInt32 → a1+24 (userID/hostID)
+	// ReadUInt8  → serverCategory
+	// ReadUInt8  → enableNexonAnalytics
+	// Read 8 bytes (float+uint32) → a1+40, a1+44 (gameModeId, mapId)
+	msg->WriteUInt32(userId);  // hostID → a1+24
+	msg->WriteUInt8(0);        // serverCategory
+	msg->WriteUInt8(0);        // enableNexonAnalytics
+	msg->WriteUInt32(0);       // gameModeId (float) → a1+40
+	msg->WriteUInt32(0);       // mapId → a1+44
 	socket->Send(msg);
 }
 
@@ -3605,20 +3645,27 @@ void CPacketManager::SendHostJoin(IExtendedSocket* socket, IUser* host)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Host);
 	msg->BuildHeader();
-
 	msg->WriteUInt8(HostPacketType::HostJoin);
-	msg->WriteUInt32(host->GetID());
-	msg->WriteUInt64(0); // что это?
+	// Decoder (sub_2590D80 case 1):
+	// ReadUInt32 → a1+24 (hostUserID)
+	// Read 8 bytes (float+uint32) → a1+40, a1+44 (gameModeId, mapId)
+	// ReadUInt32 → extIP
+	// ReadUInt16 → extClientPort
+	// ReadUInt16 → extServerPort
+	// ReadUInt32 → localIP
+	// ReadUInt16 → localClientPort
+	// ReadUInt16 → localServerPort
+	msg->WriteUInt32(host->GetID()); // hostUserID → a1+24
+	msg->WriteUInt32(0);             // gameModeId (float) → a1+40
+	msg->WriteUInt32(0);             // mapId → a1+44
 
 	UserNetworkConfig_s network = host->GetNetworkConfig();
-
-	msg->WriteUInt32(ip_string_to_int(network.m_szExternalIpAddress), false);
+	msg->WriteUInt32(ip_string_to_int(network.m_szExternalIpAddress)); // extIP
 	msg->WriteUInt16(network.m_nExternalClientPort);
 	msg->WriteUInt16(network.m_nExternalServerPort);
-	msg->WriteUInt32(ip_string_to_int(network.m_szLocalIpAddress), false);
+	msg->WriteUInt32(ip_string_to_int(network.m_szLocalIpAddress));    // localIP
 	msg->WriteUInt16(network.m_nLocalClientPort);
 	msg->WriteUInt16(network.m_nLocalServerPort);
-
 	socket->Send(msg);
 }
 
@@ -3869,8 +3916,8 @@ void CPacketManager::SendQuestUpdateQuestStat(IExtendedSocket* socket, int flag,
 
 void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterItemID, int currentLoadout, const vector<CUserLoadout>& loadouts)
 {
-	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
-	msg->BuildHeader();
+    CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
+    msg->BuildHeader();
 
 	msg->WriteUInt8(FavoritePacketType::SetLoadout);
 	msg->WriteUInt16(characterItemID);
@@ -3879,27 +3926,21 @@ void CPacketManager::SendFavoriteLoadout(IExtendedSocket* socket, int characterI
 	msg->WriteUInt8(LOADOUT_SLOT_COUNT); // items in loadout
 	msg->WriteUInt8(0);
 
-	for (int i = 0; i < LOADOUT_COUNT; i++)
-	{
-		if (i < loadouts.size())
-		{
-			for (auto item : loadouts[i].items)
-			{
-				msg->WriteUInt16(item);
-			}
-		}
-		else
-		{
-			msg->WriteUInt16(12);
-			msg->WriteUInt16(2);
-			msg->WriteUInt16(161);
-			msg->WriteUInt16(31);
-		}
-	}
+    static const uint16_t defaultItems[4] = { 24, 6, 161, 31 };
 
-	socket->Send(msg);
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            msg->WriteUInt8(0);
+            msg->WriteUInt16(defaultItems[j]);
+            for (int k = 1; k < 10; k++)
+                msg->WriteUInt16(0);
+        }
+    }
+
+    socket->Send(msg);
 }
-
 void CPacketManager::SendFavoriteFastBuy(IExtendedSocket* socket, const vector<CUserFastBuy>& fastbuy)
 {
 	CSendPacket* msg = CreatePacket(socket, PacketId::Favorite);
@@ -7521,5 +7562,212 @@ void CPacketManager::SendVoxelUnk58(IExtendedSocket* socket)
 
 	msg->WriteUInt8(6);
 
+	socket->Send(msg);
+}
+void CPacketManager::SendUserStartStep(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::UserStartStep);
+	msg->BuildHeader();
+	msg->WriteUInt8(0);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendClanTotalWar(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::ClanTotalWar);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	switch (subtype)
+	{
+	case 12:
+		// sub_2083910: uint16, uint8, uint32, uint32, uint32, uint32, then sub_2081580: uint8 count
+		msg->WriteUInt16(0); // warID
+		msg->WriteUInt8(0);  // flag
+		msg->WriteUInt32(0); // field1
+		msg->WriteUInt32(0); // field2
+		msg->WriteUInt32(0); // size
+		msg->WriteUInt32(0); // field3
+		msg->WriteUInt8(0);  // sub_2081580 count=0, no entries
+		break;
+	default:
+		break;
+	}
+	socket->Send(msg);
+}
+
+void CPacketManager::SendExpedition(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Expedition);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendVipSystem(IExtendedSocket* socket, int subtype, const UserVip& vip)
+{
+	// Calculate vipLevel from vipExp using configured tiers
+	int currentRank = 0;
+	if (g_pServerConfig && !g_pServerConfig->vipTiers.empty())
+	{
+		for (int i = (int)g_pServerConfig->vipTiers.size() - 1; i >= 0; i--)
+		{
+			if (vip.vipExp >= g_pServerConfig->vipTiers[i].pointsRequired)
+			{
+				currentRank = i;
+				break;
+			}
+		}
+	}
+
+	// Next rank = currentRank + 1 (capped at max)
+	int nextRank = currentRank;
+	if (g_pServerConfig && currentRank < (int)g_pServerConfig->vipTiers.size() - 1)
+		nextRank = currentRank + 1;
+
+	CSendPacket* msg = CreatePacket(socket, PacketId::VipSystem);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	switch (subtype)
+	{
+	case 0:
+		// Structure from Korean server capture:
+		// Korean server sends entryCount=0 (no bar segment entries)
+		// The bar threshold markers come purely from case 8 +20 field (ptsRequired)
+		msg->WriteUInt8(currentRank);
+		msg->WriteUInt32(vip.vipExp);   // payments last 90 days
+		msg->WriteUInt32(0);            // totalCashSpent = 0 (Korean server sends 0 here)
+		msg->WriteUInt8(nextRank);
+		msg->WriteUInt8(currentRank);   // unknown flag = currentRank (matches Korean server)
+		msg->WriteUInt8(0);             // entryCount = 0
+		break;
+	case 8:
+	{
+		// From Korean server packet capture - exact structure:
+		// rankID(1) + mileage(4) + subCount(1) + N*item(1) + flags(8) + ptsRequired(4)
+		// Real Korean tier data: 0,50,200,750,4000,10000,10000,25000 pts
+		// Real mileage: 0,100,2000,5000,10000,15000,20000,25000
+		// Note: entry 1 has rankID=0 (not 1) - acts as Bronze threshold marker with rankID reused
+		// Flags: flag[0]=+25, flag[1]=+24, flag[2]=+26, flag[3]=+27, flag[4]=+28, flag[5]=+30, flag[6]=+31, flag[7]=+32
+		
+		// Korean server's exact 8 entries:
+		struct VipEntry {
+			uint8_t rankId;
+			uint32_t mileage;
+			std::vector<uint8_t> items;
+			uint8_t flags[8];
+			uint32_t ptsRequired;
+		};
+		
+		int tierCount = g_pServerConfig ? (int)g_pServerConfig->vipTiers.size() : 0;
+		
+		for (int i = 0; i < 8; i++)
+		{
+			const CServerConfig::VipTier* tier = (g_pServerConfig && i < tierCount)
+				? &g_pServerConfig->vipTiers[i] : nullptr;
+			
+			// rankID: entry 0 and 1 both use rankID=0 (matches Korean server), rest match index
+			uint8_t rankId = (i <= 1) ? 0 : (uint8_t)i;
+			msg->WriteUInt8(rankId);
+			msg->WriteUInt32(tier ? (uint32_t)tier->mileagePayback : 0);
+			
+			// sub-items: descending list from (i-1) down to 1
+			// tier 0,1: no items; tier 2: [1]; tier 3: [1]; tier 4: [2,1]; tier 5: [3,2,1]; etc.
+			int subCount = (i <= 1) ? 0 : (i >= 7 ? 6 : (i - 1));
+			// Korean: tier2=0 items, tier3=1 item, tier4=2, tier5=3, tier6=4, tier7=6
+			static const uint8_t koreanSubCounts[8] = {0, 0, 0, 1, 2, 3, 4, 6};
+			subCount = koreanSubCounts[i];
+			msg->WriteUInt8(subCount);
+			for (int j = subCount; j >= 1; j--)
+				msg->WriteUInt8((uint8_t)j);
+			
+			// 8 flag bytes (+25,+24,+26,+27,+28,+30,+31,+32)
+			// From capture: tier 0-1: all zeros; tier 2+: +24=1,+26=1; higher tiers add more
+			msg->WriteUInt8(tier ? tier->unk25          : 0);
+			msg->WriteUInt8(tier ? tier->unk24          : 0);
+			msg->WriteUInt8(tier ? tier->zombieScenario : 0);
+			msg->WriteUInt8(tier ? tier->loginSupplies  : 0);
+			msg->WriteUInt8(tier ? tier->unk28          : 0);
+			msg->WriteUInt8(tier ? tier->unk30          : 0);
+			msg->WriteUInt8(tier ? tier->unk31          : 0);
+			msg->WriteUInt8(tier ? tier->unk32          : 0);
+			
+			// ptsRequired: client stores as (float)(uint32) and uses for bar threshold markers
+			msg->WriteUInt32(tier ? (uint32_t)tier->pointsRequired : 0);
+		}
+		break;
+	}
+	case 9: // login time - send count=0 (empty list)
+		msg->WriteUInt8(0);
+		break;
+	case 11:
+	{
+		// Case 11 from IDA: ReadUInt16(count), loop: ReadUInt32+ReadUInt32+ReadUInt32+ReadUInt8
+		// Populates global bar threshold list - drives the Cash bar tier markers
+		// Block[0]=threshold, Block[1]=threshold, Block[2]=nextThreshold, Block[3]=flag
+		int tierCount = g_pServerConfig ? (int)g_pServerConfig->vipTiers.size() : 0;
+		msg->WriteUInt16(tierCount);
+		for (int i = 0; i < tierCount; i++)
+		{
+			int pts     = g_pServerConfig ? g_pServerConfig->vipTiers[i].pointsRequired : 0;
+			int nextPts = (g_pServerConfig && i + 1 < tierCount) ? g_pServerConfig->vipTiers[i + 1].pointsRequired : pts;
+			msg->WriteUInt32(pts);      // Block[0]
+			msg->WriteUInt32(pts);      // Block[1]
+			msg->WriteUInt32(nextPts);  // Block[2]
+			msg->WriteUInt8(i);         // Block[3] = rank index as flag
+		}
+		break;
+	}
+	default:
+		break;
+	}
+	socket->Send(msg);
+}
+
+void CPacketManager::SendScenarioTX(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::ScenarioTX);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendRibbonSystem(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::RibbonSystem);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendHonorShop(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::HonorShop);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendMileageShop(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::MileageShop);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendQuestBadgeShop(IExtendedSocket* socket, int subtype)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::QuestBadgeShop);
+	msg->BuildHeader();
+	msg->WriteUInt8(subtype);
+	socket->Send(msg);
+}
+
+void CPacketManager::SendRecommendedRooms(IExtendedSocket* socket)
+{
+	CSendPacket* msg = CreatePacket(socket, PacketId::Room);
+	msg->BuildHeader();
+	msg->WriteUInt8(26);
+	msg->WriteUInt8(0);
 	socket->Send(msg);
 }

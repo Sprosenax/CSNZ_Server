@@ -120,6 +120,13 @@ bool CChannelManager::OnRoomRequest(CReceivePacket* msg, IExtendedSocket* socket
 	case InRoomType::RoomListRequest:
 		g_PacketManager.SendRoomListFull(socket, channelServers[0]->GetChannels()[0]->GetRooms());
 		break;
+	case 26:
+	{
+		// Quick Start / Zombie Z / Training Ground - respond with empty recommended room list
+		int count = msg->ReadUInt8();
+		g_PacketManager.SendRecommendedRooms(socket);
+		break;
+	}
 	case 27:
 		break;
 	case InRoomType::SetZBAddonsRequest:
@@ -1878,7 +1885,8 @@ bool CChannelManager::OnRoomSetZBAddonRequest(CReceivePacket* msg, IUser* user)
 	{
 		int itemID = msg->ReadUInt16();
 
-		if (g_pItemTable->GetCell<string>("ClassName", to_string(itemID)) == "zbsaddonitem")
+		if (g_pItemTable->GetRowIdx(to_string(itemID)) >= 0 &&
+			g_pItemTable->GetCell<string>("ClassName", to_string(itemID)) == "zbsaddonitem")
 		{
 			vector<CUserInventoryItem> items;
 			if (g_UserDatabase.GetInventoryItemsByID(user->GetID(), itemID, items))
