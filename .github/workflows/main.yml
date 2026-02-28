@@ -37,10 +37,14 @@ jobs:
         }
       shell: pwsh
 
-    - name: Remove test directory
+    - name: Stub out test directory
       run: |
-        # Test sources have compile errors unrelated to the main server build
-        if (Test-Path "src/test") { Remove-Item -Recurse -Force "src/test" }
+        # Replace test CMakeLists with empty one so CMake doesn't fail on missing dir
+        # but nothing actually gets compiled
+        if (Test-Path "src/test") {
+          Get-ChildItem "src/test" -Recurse | Remove-Item -Force -Recurse
+          New-Item -ItemType File -Force -Path "src/test/CMakeLists.txt" | Out-Null
+        }
       shell: pwsh
 
     - name: Configure CMake (Release)
