@@ -59,12 +59,10 @@ jobs:
 
     - name: Build Release
       run: |
-        cmake --build build/release -j 4 2>&1 | Tee-Object -Variable buildOutput
-        $buildOutput | Out-String
-        # Exit 0 even if tests fail, as long as the main exe was built
-        $mainBuilt = Test-Path "bin\Release\*.exe" -or (Get-ChildItem -Recurse -Include *.exe -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike "*test*" }).Count -gt 0
-        if ($mainBuilt) { exit 0 }
-        exit $LASTEXITCODE
+        cmake --build build/release -j 4
+        $buildFailed = $LASTEXITCODE
+        $mainExe = Get-ChildItem -Recurse -Include *.exe -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike "*test*" }
+        if ($mainExe.Count -gt 0) { exit 0 } else { exit $buildFailed }
       shell: pwsh
 
     - name: Configure CMake (Debug)
