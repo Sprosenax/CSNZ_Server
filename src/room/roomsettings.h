@@ -204,4 +204,10 @@ public:
 	std::string unk79_2;
 	std::string unk79_3;
 	int unk79_4;
+
+	bool m_bIsZSSpeedRun;
+	bool m_bIsChangeShot;
+	int m_nZombiePermaDeath;
+	int m_nVipRoomUnk1;
+	int m_nVipRoomUnk2;
 };
